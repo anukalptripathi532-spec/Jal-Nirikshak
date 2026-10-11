@@ -23,6 +23,10 @@ The **Bhopal Municipal Corporation officer who plans Durga visarjan** (20 Octobe
 4. Run the tests: `python -m unittest discover -s tests`.
 5. Optional, to check the data against the original PDFs (needs `pdftotext` from poppler, and the PDFs from the hackathon repo's `tracks/02-visarjan-ghat-watch/resources/`): `python tools/verify_pdf.py PATH/TO/resources`.
 
+## Publish on GitHub Pages
+
+`python run.py` also writes the report to `docs/index.html`. In the repository go to **Settings > Pages**, choose **Deploy from a branch**, branch `main`, folder `/docs`, and save. The site is then at `https://<user>.github.io/<repo>/`. Re-run `python run.py` and push to update it.
+
 ## Outputs (`outputs/`)
 
 | File | What it is |

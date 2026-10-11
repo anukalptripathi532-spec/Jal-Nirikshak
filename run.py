@@ -23,8 +23,15 @@ def main():
     brief_en, brief_hi = build_brief(readings, limits, results)
 
     write_all(OUT, readings, limits, results, sens, h, brief_en, brief_hi)
+    page = render(readings, limits, results, h, sens, brief_en, brief_hi)
     with open(os.path.join(OUT, "report.html"), "w", encoding="utf-8") as f:
-        f.write(render(readings, limits, results, h, sens, brief_en, brief_hi))
+        f.write(page)
+    # Same page for GitHub Pages (Settings > Pages > main / docs).
+    docs = os.path.join(os.path.dirname(OUT), "docs")
+    os.makedirs(docs, exist_ok=True)
+    with open(os.path.join(docs, "index.html"), "w", encoding="utf-8") as f:
+        f.write(page)
+    open(os.path.join(docs, ".nojekyll"), "w").close()
 
     print(f"{len(readings)} readings, {len(results)} ghats")
     for g in results:
