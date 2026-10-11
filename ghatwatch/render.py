@@ -282,6 +282,49 @@ SEV_EN = {"critical": "Critical", "high": "High", "moderate": "Moderate"}
 PHASE_EN = {"pre": "before immersion", "during": "during immersion", "after": "one week after"}
 
 
+def files_section():
+    cols = [("site", "required", "Ghat name", "घाट का नाम"), ("parameter", "required", "DO, BOD or pH", "DO, BOD या pH"),
+            ("value", "required", "Number", "संख्या"), ("year", "optional", "e.g. 2026", "जैसे 2026"),
+            ("festival", "optional", "Ganesh or Durga", "Ganesh या Durga"), ("phase", "optional", "pre, during or after", "pre, during या after")]
+    col_rows = "".join(
+        f'<div class="row"><dt><code>{c}</code></dt><dd>{t(req, "ज़रूरी" if req == "required" else "वैकल्पिक")} · {t(en, hi)}</dd></div>'
+        for c, req, en, hi in cols)
+    return f"""<section id="files" class="view" aria-labelledby="h-files">
+<div class="wrap">
+  <div class="sec-head"><div>
+    <h2 id="h-files">{t('Officer files', 'अधिकारी की फ़ाइलें')}</h2>
+    <p>{t('Add PDF reports and CSV readings. Files stay in this browser only; nothing is uploaded anywhere. Added readings are checked against the Class B limits but are not part of the ranking.',
+          'PDF रिपोर्ट और CSV रीडिंग जोड़ें। फ़ाइलें केवल इसी ब्राउज़र में रहती हैं; कहीं अपलोड नहीं होतीं। जोड़ी गई रीडिंग क्लास B सीमा से जाँची जाती हैं पर क्रम (रैंकिंग) में शामिल नहीं होतीं।')}</p>
+  </div></div>
+  <div class="bento">
+    <div>
+      <div class="drop" id="drop" role="group" aria-label="Add files">
+        <svg width="44" height="44" viewBox="0 0 44 44" aria-hidden="true"><circle cx="22" cy="22" r="21" fill="#fff1b8" stroke="#232323" stroke-width="1.2"/><path d="M22 29V15M22 15l-6 6M22 15l6 6" fill="none" stroke="#232323" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <b>{t('Drop PDF or CSV files here', 'PDF या CSV फ़ाइलें यहाँ छोड़ें')}</b>
+        <span class="muted small">{t('PDF and CSV, up to 25 MB each', 'PDF और CSV, हर एक 25 MB तक')}</span>
+        <button type="button" class="btn" id="file-pick">{t('Choose files', 'फ़ाइलें चुनें')}</button>
+        <input type="file" id="file-in" multiple accept=".pdf,.csv,application/pdf,text/csv" hidden>
+      </div>
+      <p class="file-msg" id="file-msg" role="status" aria-live="polite"></p>
+      <div class="sec-sub"><h3>{t('Your files', 'आपकी फ़ाइलें')}</h3></div>
+      <ul class="files" id="file-list"></ul>
+      <div class="state panel" id="file-empty"><b>{t('No files added yet', 'अभी कोई फ़ाइल नहीं जोड़ी गई')}</b><span>{t('Drop a CSV of readings or a PDF report to start.', 'शुरू करने के लिए रीडिंग की CSV या PDF रिपोर्ट छोड़ें।')}</span></div>
+      <div class="panel csv-result" id="csv-result" hidden></div>
+      <div class="panel pdf-prev" id="pdf-prev" hidden></div>
+    </div>
+    <aside class="status-panel">
+      <h2>{t('CSV format', 'CSV का प्रारूप')}</h2>
+      <dl>{col_rows}</dl>
+      <p class="small" style="color:var(--on-dark-muted);margin:12px 0 14px">{t('The first row is the header. Names are not case sensitive. Ghat names are matched to the seven ghats in this report.', 'पहली पंक्ति शीर्षक है। नाम में बड़े-छोटे अक्षर का फ़र्क नहीं। घाट के नाम इस रिपोर्ट के सात घाटों से मिलाए जाते हैं।')}</p>
+      <button type="button" class="btn yellow" id="tpl">{t('Download CSV template', 'CSV टेम्पलेट डाउनलोड करें')}</button>
+      <div style="height:16px"></div>
+    </aside>
+  </div>
+</div>
+</section>
+"""
+
+
 def read_asset(name):
     with open(os.path.join(ASSETS, name), encoding="utf-8") as f:
         return f.read()
@@ -347,18 +390,18 @@ def seg_buttons(opts, on="all"):
 
 
 def metric(fig, denom, label, frac, warn=False):
-    return (f'<div class="metric"><div class="fig">{fig}{f" <small>/ {denom}</small>" if denom else ""}</div>'
-            f'<div class="lab">{label}</div>'
-            f'<div class="meter{" warn" if warn else ""}" aria-hidden="true"><i style="width:{100 * frac:.0f}%"></i></div>'
-            f'<div class="stat">{100 * frac:.0f}%</div></div>')
+    pct = f"{100 * frac:.0f}%"
+    return (f'<div class="metric"><div class="lab">{label}</div>'
+            f'<div class="pill-meter{" warn" if warn else ""}" aria-hidden="true"><i style="width:{max(100 * frac, 0):.0f}%">{pct}</i></div>'
+            f'<div class="fig">{fig}{f" <small>/ {denom}</small>" if denom else ""}</div></div>')
 
 
 NAV = [("overview", "Overview", "सारांश"), ("priority", "Priority", "प्राथमिकता"), ("trends", "Trends", "रुझान"),
        ("incidents", "Incidents", "घटनाएँ"), ("ghats", "Ghats", "घाट"), ("brief", "Brief", "सार"),
-       ("method", "Method", "विधि")]
+       ("method", "Method", "विधि"), ("files", "Files", "फ़ाइलें")]
 
-LOGO = ('<svg width="28" height="28" viewBox="0 0 28 28" aria-hidden="true"><rect width="28" height="28" rx="6" fill="#bd5d3a"/>'
-        '<path d="M5 12c3-3 5-3 8 0s5 3 8 0M5 18c3-3 5-3 8 0s5 3 8 0" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"/></svg>')
+LOGO = ('<svg width="26" height="26" viewBox="0 0 28 28" aria-hidden="true"><circle cx="14" cy="14" r="14" fill="#ffd95a"/>'
+        '<path d="M6 12c2.6-2.6 4.4-2.6 8 0s5.4 2.6 8 0M6 18c2.6-2.6 4.4-2.6 8 0s5.4 2.6 8 0" fill="none" stroke="#232323" stroke-width="2" stroke-linecap="round"/></svg>')
 
 
 def render(readings, limits, results, h, sens, brief_en, brief_hi):
@@ -422,9 +465,11 @@ def render(readings, limits, results, h, sens, brief_en, brief_hi):
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Ghat Watch · Visarjan water-quality monitor, Bhopal</title>
+<title>Jal Nirikshak · Visarjan water-quality monitor, Bhopal</title>
 <meta name="description" content="Ranking of Bhopal's immersion ghats from 2023-2025 MPPCB water readings against CPCB Class B limits.">
 <script>document.documentElement.className+=" js";</script>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500&display=swap">
 <style>
 {read_asset("report.css")}
 </style>
@@ -433,7 +478,7 @@ def render(readings, limits, results, h, sens, brief_en, brief_hi):
 <a class="skip" href="#main">{t('Skip to content', 'सामग्री पर जाएँ')}</a>
 <header class="site">
   <div class="site-in">
-    <a class="brand" href="#overview">{LOGO}<span>Ghat Watch</span></a>
+    <a class="brand" href="#overview">{LOGO}<span>{t('Jal Nirikshak', 'जल निरीक्षक')}</span></a>
     <nav class="nav" aria-label="Sections">{nav}</nav>
     <div class="site-tools">
       <span class="status-pill" title="{pill_tip}"><i aria-hidden="true"></i><span>{t('Historical data<span class="l-long"> · not live</span>', 'पुराना डेटा<span class="l-long"> · लाइव नहीं</span>')}</span></span>
@@ -446,17 +491,41 @@ def render(readings, limits, results, h, sens, brief_en, brief_hi):
 </header>
 
 <main id="main">
+<div id="view-dash">
 <section id="overview" class="overview" aria-labelledby="h-over">
   <div class="wrap">
     <div class="ov-grid">
       <div>
-        <h1 id="h-over">{t('Visarjan Ghat Watch, Bhopal', 'विसर्जन घाट वॉच, भोपाल')}</h1>
+        <h1 id="h-over">{t('Jal Nirikshak, Bhopal', 'जल निरीक्षक, भोपाल')}</h1>
         <p class="for">{t('For the BMC officer planning Durga visarjan, 20 October 2026', 'दुर्गा विसर्जन (20 अक्टूबर 2026) की योजना बनाने वाले BMC अधिकारी के लिए')}</p>
         <p class="lede">{t(
     f'The {n_ghats} immersion ghats ranked by how often and how far their 2023-2025 water readings missed the CPCB Class B (outdoor bathing) limits for dissolved oxygen, BOD and pH. A screening aid, not a legal finding and not today’s water.',
     f'{n_ghats} विसर्जन घाट, इस आधार पर क्रम में कि 2023-2025 की पानी की रीडिंग घुलित ऑक्सीजन, BOD और pH के लिए CPCB क्लास B (बाहरी स्नान) सीमा से कितनी बार और कितनी दूर बाहर रहीं। यह जाँच में मदद है, कानूनी निष्कर्ष नहीं, और आज के पानी की स्थिति नहीं।')}</p>
       </div>
-      <aside class="status-panel" aria-labelledby="h-status">
+      <div class="bignums" role="group" aria-label="Key numbers">
+        <div class="bignum"><b>{n_ghats}</b><span>{t('Ghats', 'घाट')}</span></div>
+        <div class="bignum"><b>{n_key - h['missing_total']}</b><span>{t('Readings scored', 'स्कोर की रीडिंग')}</span></div>
+        <div class="bignum"><b>{inc_total}</b><span>{t('Outside limit', 'सीमा से बाहर')}</span></div>
+      </div>
+    </div>
+    <div class="metrics" role="group" aria-label="Key figures">{metrics}</div>
+  </div>
+</section>
+
+<div class="wrap">
+<section id="priority" aria-labelledby="h-pri">
+  <div class="sec-head"><div><h2 id="h-pri">{t('Where the 2023-2025 readings point first', '2023-2025 की रीडिंग पहले कहाँ इशारा करती हैं')}</h2></div></div>
+  <div class="bento">
+  <div>
+  {answer}
+  <details class="help">
+    <summary>{t('How this score works, in 30 seconds', 'यह स्कोर कैसे बनता है, 30 सेकंड में')}</summary>
+    <p>{t('Each ghat is scored from 0 to 100 on dissolved oxygen, BOD and pH readings against CPCB Class B limits. A reading counts more the further it is past the limit. Missing readings are left out and shown as a range, never counted as clean.',
+          'हर घाट को घुलित ऑक्सीजन, BOD और pH की रीडिंग के आधार पर CPCB क्लास B सीमा के मुकाबले 0 से 100 अंक मिलते हैं। रीडिंग सीमा से जितनी दूर, उतना अधिक असर। छूटी रीडिंग स्कोर में नहीं गिनी जातीं और दायरे में दिखती हैं, साफ़ नहीं मानी जातीं।')}
+      <a href="#method">{t('Full method', 'पूरी विधि')}</a></p>
+  </details>
+  </div>
+    <aside class="status-panel" aria-labelledby="h-status">
         <h2 id="h-status">{t('System status', 'सिस्टम स्थिति')}</h2>
         <dl>
           <div class="row"><dt>{t('Data', 'डेटा')}</dt><dd>{t(f'MPPCB reports {years[0]}-{years[-1]}', f'MPPCB रिपोर्ट {years[0]}-{years[-1]}')}</dd></div>
@@ -466,21 +535,7 @@ def render(readings, limits, results, h, sens, brief_en, brief_hi):
           <div class="row"><dt>{t('Ghats', 'घाट')}</dt><dd class="num">{n_ghats}</dd></div>
         </dl>
       </aside>
-    </div>
-    <div class="metrics" role="group" aria-label="Key figures">{metrics}</div>
   </div>
-</section>
-
-<div class="wrap">
-<section id="priority" aria-labelledby="h-pri">
-  <div class="sec-head"><div><h2 id="h-pri">{t('Where the 2023-2025 readings point first', '2023-2025 की रीडिंग पहले कहाँ इशारा करती हैं')}</h2></div></div>
-  {answer}
-  <details class="help">
-    <summary>{t('How this score works, in 30 seconds', 'यह स्कोर कैसे बनता है, 30 सेकंड में')}</summary>
-    <p>{t('Each ghat is scored from 0 to 100 on dissolved oxygen, BOD and pH readings against CPCB Class B limits. A reading counts more the further it is past the limit. Missing readings are left out and shown as a range, never counted as clean.',
-          'हर घाट को घुलित ऑक्सीजन, BOD और pH की रीडिंग के आधार पर CPCB क्लास B सीमा के मुकाबले 0 से 100 अंक मिलते हैं। रीडिंग सीमा से जितनी दूर, उतना अधिक असर। छूटी रीडिंग स्कोर में नहीं गिनी जातीं और दायरे में दिखती हैं, साफ़ नहीं मानी जातीं।')}
-      <a href="#method">{t('Full method', 'पूरी विधि')}</a></p>
-  </details>
 </section>
 
 <section id="trends" aria-labelledby="h-tr">
@@ -586,6 +641,8 @@ def render(readings, limits, results, h, sens, brief_en, brief_hi):
      'स्रोत: MPPCB गणेश और दुर्गा विसर्जन रिपोर्ट 2023 (Idol_immer._Report_23_CPCB.pdf), 2024 और 2025, हैकथॉन डेटासेट से। पृष्ठ संख्या उस वर्ष की रिपोर्ट PDF का पृष्ठ है। CPCB जल गुणवत्ता मानदंड। हिंदी पाठ की अभी किसी मूल भाषी ने जाँच नहीं की है।')}
 </footer>
 </div>
+</div>
+{files_section()}
 </main>
 <script type="application/json" id="brief-text">{copy_text}</script>
 <script type="application/json" id="gw-data">{data_json}</script>

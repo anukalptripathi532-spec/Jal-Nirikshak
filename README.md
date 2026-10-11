@@ -1,4 +1,4 @@
-# Visarjan Ghat Watch
+# Jal Nirikshak (Visarjan Ghat Watch)
 
 **Team:** `TEAM NAME — FILL IN`
 **Members:** `MEMBER 1 — FILL IN`, `MEMBER 2 — FILL IN`, `MEMBER 3 — FILL IN`

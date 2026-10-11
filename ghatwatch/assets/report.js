@@ -363,5 +363,179 @@
     else fallback(text);
   });
 
+
+  /* ---------- views: dashboard / files tab ---------- */
+  function applyView(scroll) {
+    var f = location.hash === '#files';
+    document.body.classList.toggle('view-files', f);
+    $$('.nav a').forEach(function (a) { if (f) a.setAttribute('aria-current', String(a.getAttribute('href') === '#files')); });
+    if (f) { if (scroll) window.scrollTo(0, 0); return; }
+    var id = location.hash.slice(1), t = id && document.getElementById(id);
+    if (t && scroll) t.scrollIntoView();
+  }
+  window.addEventListener('hashchange', function () { applyView(true); });
+
+  /* ---------- officer files (stored in this browser only) ---------- */
+  var FS = {
+    en: { size: 'Files over 25 MB are not accepted.', bad: 'Only PDF and CSV files can be added.', notpdf: 'does not look like a PDF.', added: 'Added', open: 'Open', remove: 'Remove', preview: 'Preview', check: 'Check',
+      rows: 'rows', valid: 'readings checked', unknownCols: 'Missing required columns:', outside: 'outside the Class B limit', skipped: 'Rows skipped (no number or unknown test)', unknownGhat: 'Unknown ghat',
+      ghat: 'Ghat', test: 'Test', reading: 'Reading', limit: 'Limit', when: 'When', status: 'Status', outTag: 'Outside limit', inTag: 'Within limit', noneOut: 'No readings outside the limit in this file.',
+      note: 'Officer-added readings are checked on your device only. They are not part of the ranking or the incident list above.', storeErr: 'This browser could not keep the files after you close the page.',
+      csvErr: 'This CSV could not be read.', close: 'Close', matched: 'Matches' },
+    hi: { size: '25 MB से बड़ी फ़ाइलें नहीं ली जातीं।', bad: 'केवल PDF और CSV फ़ाइलें जोड़ी जा सकती हैं।', notpdf: 'PDF जैसी नहीं लगती।', added: 'जोड़ी गई', open: 'खोलें', remove: 'हटाएँ', preview: 'पूर्वावलोकन', check: 'जाँचें',
+      rows: 'पंक्तियाँ', valid: 'रीडिंग जाँची गईं', unknownCols: 'ज़रूरी कॉलम नहीं मिले:', outside: 'क्लास B सीमा से बाहर', skipped: 'छोड़ी गई पंक्तियाँ (संख्या नहीं या अज्ञात जाँच)', unknownGhat: 'अज्ञात घाट',
+      ghat: 'घाट', test: 'जाँच', reading: 'रीडिंग', limit: 'सीमा', when: 'कब', status: 'स्थिति', outTag: 'सीमा से बाहर', inTag: 'सीमा में', noneOut: 'इस फ़ाइल में कोई रीडिंग सीमा से बाहर नहीं है।',
+      note: 'अधिकारी द्वारा जोड़ी गई रीडिंग केवल आपके डिवाइस पर जाँची जाती है। वे ऊपर की रैंकिंग या घटना सूची का हिस्सा नहीं हैं।', storeErr: 'पेज बंद करने के बाद यह ब्राउज़र फ़ाइलें नहीं रख सका।',
+      csvErr: 'यह CSV पढ़ी नहीं जा सकी।', close: 'बंद करें', matched: 'मिलान' }
+  };
+  function FT() { return FS[lang]; }
+  var drop = $('#drop');
+  if (drop) {
+    var MAX = 25 * 1024 * 1024, mem = [], dbp = null, persistOK = true, sel = null;
+    var list = $('#file-list'), emptyBox = $('#file-empty'), msg = $('#file-msg');
+    var openDB = function () {
+      if (dbp) return dbp;
+      dbp = new Promise(function (res, rej) {
+        try {
+          var rq = indexedDB.open('ghatwatch-files', 1);
+          rq.onupgradeneeded = function () { rq.result.createObjectStore('files', { keyPath: 'id' }); };
+          rq.onsuccess = function () { res(rq.result); }; rq.onerror = function () { rej(rq.error); };
+        } catch (e) { rej(e); }
+      });
+      return dbp;
+    };
+    var tx = function (mode, fn) { return openDB().then(function (db) { return new Promise(function (res, rej) { var t = db.transaction('files', mode), r = fn(t.objectStore('files')); t.oncomplete = function () { res(r && r.result); }; t.onerror = function () { rej(t.error); }; }); }); };
+    var loadAll = function () { return tx('readonly', function (s) { return s.getAll(); }).catch(function () { persistOK = false; return []; }); };
+    var saveOne = function (rec) { return tx('readwrite', function (s) { return s.put(rec); }).catch(function () { persistOK = false; msg.textContent = FT().storeErr; }); };
+    var delOne = function (id) { return tx('readwrite', function (s) { return s.delete(id); }).catch(function () {}); };
+
+    var kb = function (n) { return n > 1048576 ? (n / 1048576).toFixed(1) + ' MB' : Math.max(1, Math.round(n / 1024)) + ' KB'; };
+    var kindOf = function (f) { var n = f.name.toLowerCase(); return n.slice(-4) === '.pdf' || f.type === 'application/pdf' ? 'pdf' : (n.slice(-4) === '.csv' || f.type === 'text/csv' ? 'csv' : ''); };
+
+    function renderList() {
+      list.textContent = '';
+      emptyBox.hidden = mem.length > 0;
+      mem.slice().sort(function (a, b) { return b.added - a.added; }).forEach(function (r) {
+        var li = document.createElement('li'); li.className = 'file' + (sel === r.id ? ' on' : '');
+        var k = document.createElement('span'); k.className = 'kind kind-' + r.kind; k.textContent = r.kind.toUpperCase(); li.appendChild(k);
+        var info = document.createElement('div'); info.className = 'finfo';
+        var nm = document.createElement('b'); nm.textContent = r.name; info.appendChild(nm);
+        var sub = document.createElement('span'); sub.className = 'muted small';
+        sub.textContent = kb(r.size) + ' · ' + FT().added + ' ' + new Date(r.added).toLocaleString(lang === 'hi' ? 'hi-IN' : 'en-IN', { dateStyle: 'medium', timeStyle: 'short' }); info.appendChild(sub);
+        li.appendChild(info);
+        var act = document.createElement('div'); act.className = 'fact';
+        var b1 = document.createElement('button'); b1.type = 'button'; b1.className = 'btn ghost'; b1.textContent = r.kind === 'pdf' ? FT().preview : FT().check;
+        b1.addEventListener('click', function () { show(r); }); act.appendChild(b1);
+        if (r.kind === 'pdf') {
+          var b2 = document.createElement('button'); b2.type = 'button'; b2.className = 'btn ghost'; b2.textContent = FT().open;
+          b2.addEventListener('click', function () { window.open(URL.createObjectURL(r.blob), '_blank', 'noopener'); }); act.appendChild(b2);
+        }
+        var b3 = document.createElement('button'); b3.type = 'button'; b3.className = 'btn ghost danger'; b3.textContent = FT().remove;
+        b3.addEventListener('click', function () { mem = mem.filter(function (x) { return x.id !== r.id; }); delOne(r.id); if (sel === r.id) { sel = null; $('#csv-result').hidden = true; $('#pdf-prev').hidden = true; } renderList(); });
+        act.appendChild(b3); li.appendChild(act); list.appendChild(li);
+      });
+    }
+
+    /* CSV: RFC 4180 style parser */
+    function parseCSV(text) {
+      var rows = [], row = [], cur = '', q = false, i = 0;
+      if (text.charCodeAt(0) === 0xFEFF) text = text.slice(1);
+      for (; i < text.length; i++) {
+        var c = text[i];
+        if (q) { if (c === '"') { if (text[i + 1] === '"') { cur += '"'; i++; } else q = false; } else cur += c; }
+        else if (c === '"') q = true;
+        else if (c === ',') { row.push(cur); cur = ''; }
+        else if (c === '\n' || c === '\r') { if (c === '\r' && text[i + 1] === '\n') i++; row.push(cur); cur = ''; if (row.length > 1 || row[0] !== '') rows.push(row); row = []; }
+        else cur += c;
+      }
+      if (cur !== '' || row.length) { row.push(cur); rows.push(row); }
+      return rows;
+    }
+    var paramKey = function (s) { s = (s || '').toLowerCase().replace(/\s+/g, ' ').trim(); if (s === 'do' || s.indexOf('dissolved oxygen') === 0) return 'DO'; if (s.indexOf('bod') === 0) return 'BOD'; if (s === 'ph') return 'pH'; return ''; };
+    var outside = function (L, v) { return L.kind === 'min' ? v < L.low : L.kind === 'max' ? v > L.high : (v < L.low || v > L.high); };
+    var matchSite = function (name) {
+      var n = (name || '').toLowerCase(); if (!n) return -1;
+      for (var i = 0; i < DATA.sites.length; i++) { if (n.indexOf(DATA.sites[i].en.toLowerCase()) > -1) return i; }
+      return -1;
+    };
+    function checkCSV(rec) {
+      var box = $('#csv-result'); $('#pdf-prev').hidden = true; box.hidden = false; box.textContent = '';
+      rec.blob.text().then(function (text) {
+        var rows = parseCSV(text), head = (rows[0] || []).map(function (h) { return h.trim().toLowerCase(); });
+        var ix = function (n) { return head.indexOf(n); };
+        var need = ['site', 'parameter', 'value'].filter(function (n) { return ix(n) < 0; });
+        var h3 = document.createElement('h3'); h3.textContent = rec.name; box.appendChild(h3);
+        if (need.length) {
+          var e = document.createElement('div'); e.className = 'state err'; e.setAttribute('role', 'alert');
+          e.innerHTML = '<b></b><span></span>'; e.firstChild.textContent = FT().unknownCols + ' ' + need.join(', ');
+          e.lastChild.textContent = head.join(', ') || '—'; box.appendChild(e); return;
+        }
+        var data = rows.slice(1), checked = 0, skipped = 0, out = [], unknown = 0;
+        data.forEach(function (r) {
+          var k = paramKey(r[ix('parameter')]), v = parseFloat((r[ix('value')] || '').replace(',', '.'));
+          if (!k || !isFinite(v)) { skipped++; return; }
+          checked++;
+          var L = DATA.limits[k], si = matchSite(r[ix('site')]); if (si < 0) unknown++;
+          if (outside(L, v)) out.push({ site: r[ix('site')], si: si, k: k, v: v, L: L, when: [ix('year') > -1 ? r[ix('year')] : '', ix('festival') > -1 ? r[ix('festival')] : '', ix('phase') > -1 ? r[ix('phase')] : ''].filter(Boolean).join(' · ') });
+        });
+        var sum = document.createElement('ul'); sum.className = 'sev-summary';
+        [[data.length, FT().rows], [checked, FT().valid], [out.length, FT().outside]].forEach(function (p) {
+          var li = document.createElement('li'); var b = document.createElement('b'); b.textContent = p[0]; var s = document.createElement('span'); s.className = 'muted'; s.textContent = p[1]; li.appendChild(b); li.appendChild(s); sum.appendChild(li);
+        }); box.appendChild(sum);
+        if (skipped || unknown) { var p = document.createElement('p'); p.className = 'muted small'; p.textContent = (skipped ? FT().skipped + ': ' + skipped + '. ' : '') + (unknown ? FT().unknownGhat + ': ' + unknown + '.' : ''); box.appendChild(p); }
+        if (!out.length) { var n = document.createElement('p'); n.textContent = FT().noneOut; box.appendChild(n); }
+        else {
+          var wrap = document.createElement('div'); wrap.className = 'tscroll'; var t = document.createElement('table');
+          var th = '<thead><tr>' + [FT().ghat, FT().test, FT().reading, FT().limit, FT().when].map(function (x) { return '<th>' + x + '</th>'; }).join('') + '</tr></thead>';
+          t.innerHTML = th; var tb = document.createElement('tbody');
+          out.slice(0, 200).forEach(function (o) {
+            var tr = document.createElement('tr');
+            var cells = [o.si > -1 ? (lang === 'hi' ? DATA.sites[o.si].hi : DATA.sites[o.si].en) : (o.site + ' (' + FT().unknownGhat + ')'), o.k, o.v + (o.L.unit ? ' ' + o.L.unit : ''), o.L.text, o.when || '–'];
+            cells.forEach(function (c, i) { var td = document.createElement('td'); td.textContent = c; if (i === 2) td.className = 'num'; tr.appendChild(td); }); tb.appendChild(tr);
+          });
+          t.appendChild(tb); wrap.appendChild(t); box.appendChild(wrap);
+        }
+        var nt = document.createElement('p'); nt.className = 'muted small'; nt.textContent = FT().note; box.appendChild(nt);
+      }).catch(function () { var e = document.createElement('div'); e.className = 'state err'; e.setAttribute('role', 'alert'); e.innerHTML = '<b></b>'; e.firstChild.textContent = FT().csvErr; box.appendChild(e); });
+    }
+    function showPDF(rec) {
+      var box = $('#pdf-prev'); $('#csv-result').hidden = true; box.hidden = false; box.textContent = '';
+      var h3 = document.createElement('h3'); h3.textContent = rec.name; box.appendChild(h3);
+      var f = document.createElement('iframe'); f.title = rec.name; f.src = URL.createObjectURL(rec.blob); box.appendChild(f);
+    }
+    function show(rec) { sel = rec.id; renderList(); if (rec.kind === 'pdf') showPDF(rec); else checkCSV(rec); }
+
+    function addFiles(files) {
+      msg.textContent = '';
+      var problems = [], jobs = [];
+      Array.prototype.forEach.call(files, function (f) {
+        var k = kindOf(f);
+        if (!k) { problems.push(f.name + ': ' + FT().bad); return; }
+        if (f.size > MAX) { problems.push(f.name + ': ' + FT().size); return; }
+        jobs.push((k === 'pdf' ? f.slice(0, 5).text().then(function (h) { return h.indexOf('%PDF') === 0; }) : Promise.resolve(true)).then(function (ok) {
+          if (!ok) { problems.push(f.name + ' ' + FT().notpdf); return null; }
+          var rec = { id: Date.now() + '-' + Math.random().toString(36).slice(2, 8), name: f.name, kind: k, size: f.size, added: Date.now(), blob: f };
+          mem.push(rec); return saveOne(rec).then(function () { return rec; });
+        }));
+      });
+      Promise.all(jobs).then(function (recs) {
+        renderList(); var last = recs.filter(Boolean).pop(); if (last) show(last);
+        if (problems.length) msg.textContent = problems.join(' ');
+      });
+    }
+    $('#file-pick').addEventListener('click', function () { $('#file-in').click(); });
+    $('#file-in').addEventListener('change', function () { addFiles(this.files); this.value = ''; });
+    ['dragenter', 'dragover'].forEach(function (ev) { drop.addEventListener(ev, function (e) { e.preventDefault(); drop.classList.add('over'); }); });
+    ['dragleave', 'drop'].forEach(function (ev) { drop.addEventListener(ev, function (e) { e.preventDefault(); drop.classList.remove('over'); }); });
+    drop.addEventListener('drop', function (e) { if (e.dataTransfer && e.dataTransfer.files) addFiles(e.dataTransfer.files); });
+    $('#tpl').addEventListener('click', function () {
+      var blob = new Blob(['site,parameter,value,year,festival,phase\r\n'], { type: 'text/csv' });
+      var a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'ghatwatch_readings_template.csv'; a.click();
+    });
+    listeners.push(renderList);
+    loadAll().then(function (rs) { mem = rs.filter(function (r) { return r && r.blob; }); renderList(); });
+  }
+  applyView(true);
+
   try { var saved = localStorage.getItem('ghatwatch-lang'); if (saved) setLang(saved); } catch (e) {}
 })();

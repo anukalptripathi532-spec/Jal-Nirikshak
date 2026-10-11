@@ -3,255 +3,257 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Ghat Watch · Visarjan water-quality monitor, Bhopal</title>
+<title>Jal Nirikshak · Visarjan water-quality monitor, Bhopal</title>
 <meta name="description" content="Ranking of Bhopal's immersion ghats from 2023-2025 MPPCB water readings against CPCB Class B limits.">
 <script>document.documentElement.className+=" js";</script>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500&display=swap">
 <style>
-/* Ghat Watch report. Console-style: sidebar, ivory surfaces, serif headings, clay accent; red reserved for out-of-limit readings.
-   One easing curve, short durations, transform / opacity / clip-path only. */
+/* Jal Nirikshak report. Soft warm canvas, large rounded cards, pill navigation, one charcoal feature card,
+   hatched pill meters, thin numerals, butter-yellow accent. Red is kept only for out-of-limit readings. */
 :root {
-  --bg:#faf9f5; --surface:#ffffff; --ink:#141413; --muted:#6b6a64; --line:#e8e6dc; --line-strong:#d3d0c4;
-  --side:#f5f4ed; --side-line:#e8e6dc;
-  --accent:#bd5d3a; --accent-ink:#a4492a; --accent-soft:#f6e6de; --on-accent:#ffffff;
-  --teal:#4a4943; --teal-ink:#a4492a; --teal-soft:#efede4; --on-teal:#ffffff;
-  --bad:#b3261e; --bad-bg:#fbebe8; --warn:#8f5200; --warn-bg:#fdf0d5; --ok:#2f6b3f; --ok-bg:#e7f1e5;
-  --low:#3b5878; --low-bg:#e9eef4; --miss:#6b5a1d; --miss-bg:#f1ebd9; --hl:#fbf0d3;
+  --bg:#f3f1e8; --surface:#fffefa; --card-a:rgba(255,255,255,.94); --card-b:rgba(255,251,236,.78);
+  --ink:#232323; --muted:#6c6a62; --line:#e7e3d3; --line-strong:#cfcab6; --dash:#d9d4bf;
+  --dark:#2b2b2b; --dark-2:#3a3a38; --on-dark:#f6f4ea; --on-dark-muted:#a9a69a;
+  --yellow:#ffd95a; --yellow-soft:#fff1b8; --yellow-ink:#6f5200;
+  --accent:#2b2b2b; --accent-ink:#2b2b2b; --accent-soft:#fff1b8; --on-accent:#ffffff;
+  --teal:#2b2b2b; --teal-ink:#2b2b2b; --teal-soft:#f4f0dd; --on-teal:#ffffff;
+  --side:#f7f4e6;
+  --bad:#c8402a; --bad-bg:#fde9e3; --warn:#7a5a00; --warn-bg:#fff1b8; --ok:#2f6b3f; --ok-bg:#e6f1e0;
+  --low:#3b5878; --low-bg:#e9eef4; --miss:#6b5a1d; --miss-bg:#f3edd2; --hl:#fff1b8;
   --ease-out:cubic-bezier(.23,1,.32,1);
-  --radius:8px; --side-w:248px;
-  --serif:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,"Noto Serif","Noto Serif Devanagari",serif;
+  --r-lg:30px; --r-md:20px; --r-sm:12px;
+  --display:"Outfit","Segoe UI Variable Display","Segoe UI",system-ui,-apple-system,"Noto Sans","Noto Sans Devanagari","Nirmala UI",sans-serif;
+  --text:"Outfit","Segoe UI Variable Text","Segoe UI",system-ui,-apple-system,Roboto,"Noto Sans","Noto Sans Devanagari","Nirmala UI",sans-serif;
+  --hatch:repeating-linear-gradient(135deg,transparent 0 5px,rgba(35,35,35,.16) 5px 6px);
   color-scheme:light;
-}
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    --bg:#262624; --surface:#30302e; --ink:#faf9f5; --muted:#a3a198; --line:#3d3d3a; --line-strong:#52514c;
-    --side:#1f1e1d; --side-line:#3d3d3a;
-    --accent:#d97757; --accent-ink:#e8977a; --accent-soft:#44302a; --on-accent:#141413;
-    --teal:#c9c7bd; --teal-ink:#e8977a; --teal-soft:#3a3935; --on-teal:#141413;
-    --bad:#ff9087; --bad-bg:#3d2523; --warn:#f0b955; --warn-bg:#3a2e12; --ok:#8fd3a0; --ok-bg:#243a2a;
-    --low:#9fbbe0; --low-bg:#27313f; --miss:#e6c766; --miss-bg:#33301f; --hl:#3a3220;
-    color-scheme:dark;
-  }
 }
 * { box-sizing:border-box; }
 [hidden] { display:none !important; }
-html { -webkit-text-size-adjust:100%; -webkit-font-smoothing:antialiased; scroll-padding-top:24px; }
-body { margin:0; background:var(--bg); color:var(--ink);
-  font:16px/1.55 "Segoe UI Variable Text","Segoe UI",system-ui,-apple-system,Roboto,"Noto Sans","Noto Sans Devanagari","Nirmala UI",sans-serif; }
+html { -webkit-text-size-adjust:100%; -webkit-font-smoothing:antialiased; scroll-padding-top:96px; }
+body { margin:0; color:var(--ink); font:400 16px/1.55 var(--text); min-height:100vh;
+  background:linear-gradient(135deg,#e3e5e9 0%,#f1f0ea 38%,#f8f1d2 72%,#fbe9a0 100%) fixed; }
 body.hi .l-en, body:not(.hi) .l-hi { display:none; }
-.wrap { max-width:1060px; margin:0 auto; padding:0 40px; }
-h1,h2,h3,h4,h5 { text-wrap:balance; margin:0; font-weight:700; }
-h1,h2,.metric .fig,.score .big,.sev-summary b { font-family:var(--serif); font-weight:500; }
-p, li { text-wrap:pretty; }
-p { margin:8px 0; }
-a { color:var(--teal-ink); text-underline-offset:3px; }
-.muted { color:var(--muted); } .small { font-size:.875rem; }
-.num { font-variant-numeric:tabular-nums; }
-::selection { background:var(--teal-soft); color:var(--ink); }
-:focus-visible { outline:2px solid var(--accent); outline-offset:2px; border-radius:4px; }
-.skip { position:absolute; left:-999px; top:8px; background:var(--surface); color:var(--ink); padding:8px 12px; border-radius:var(--radius); z-index:100; }
+.wrap { max-width:1240px; margin:0 auto; padding:0 28px; }
+h1,h2,h3,h4,h5 { text-wrap:balance; margin:0; font-family:var(--display); font-weight:400; letter-spacing:-.01em; }
+p, li { text-wrap:pretty; } p { margin:8px 0; }
+a { color:var(--ink); text-underline-offset:3px; }
+.muted { color:var(--muted); } .small { font-size:.875rem; } .num { font-variant-numeric:tabular-nums; }
+::selection { background:var(--yellow); color:var(--ink); }
+:focus-visible { outline:2px solid var(--ink); outline-offset:3px; border-radius:8px; }
+.skip { position:absolute; left:-999px; top:8px; background:var(--surface); color:var(--ink); padding:8px 14px; border-radius:999px; z-index:100; }
 .skip:focus { left:8px; }
 * { scrollbar-color:var(--line-strong) transparent; scrollbar-width:thin; }
-
-/* Sidebar (Console-style) */
-.site { position:fixed; inset:0 auto 0 0; width:var(--side-w); z-index:50; background:var(--side); color:var(--ink); border-right:1px solid var(--side-line); display:flex; flex-direction:column; padding:18px 12px; gap:20px; overflow-y:auto; }
-.site-in { display:contents; }
-.brand { display:flex; align-items:center; gap:10px; color:var(--ink); text-decoration:none; font-family:var(--serif); font-weight:600; font-size:1.2rem; letter-spacing:-.01em; padding:4px 8px; white-space:nowrap; }
-.brand svg { flex:none; }
-.nav { display:flex; flex-direction:column; gap:2px; flex:1; min-height:0; }
-.nav a { color:var(--muted); text-decoration:none; font-size:.92rem; font-weight:500; padding:8px 10px; border-radius:6px; white-space:nowrap; transition:color .15s var(--ease-out), background-color .15s var(--ease-out); }
-.nav a[aria-current="true"] { color:var(--ink); background:var(--teal-soft); font-weight:600; }
-.site-tools { display:flex; flex-direction:column; gap:12px; }
-.status-pill { display:flex; align-items:center; gap:8px; font-size:.8rem; font-weight:500; color:var(--muted); border:1px solid var(--line-strong); padding:8px 10px; border-radius:var(--radius); background:var(--surface); }
-.status-pill i { width:8px; height:8px; border-radius:50%; background:#d9a21b; flex:none; }
-.lang { display:flex; border:1px solid var(--line-strong); border-radius:var(--radius); overflow:hidden; background:var(--surface); }
-.lang button { flex:1; border:0; background:transparent; color:var(--muted); padding:7px 12px; font:inherit; font-size:.85rem; cursor:pointer; min-height:36px; transition:background-color .15s var(--ease-out), color .15s var(--ease-out), transform .16s var(--ease-out); }
-.lang button[aria-pressed="true"] { background:var(--teal-soft); color:var(--ink); font-weight:600; }
-.lang button:active { transform:scale(.97); }
-main { margin-left:var(--side-w); }
-
-/* Sections */
-main section { padding:56px 0 8px; }
-.sec-head { display:flex; justify-content:space-between; align-items:end; gap:16px 32px; flex-wrap:wrap; margin-bottom:20px; }
-.sec-head h2 { font-size:1.5rem; letter-spacing:-.02em; line-height:1.2; }
-.sec-head p { margin:6px 0 0; max-width:64ch; color:var(--muted); }
-
-/* Overview */
-.main .overview, main section.overview { border-bottom:1px solid var(--line); padding:56px 0 36px; }
-.ov-grid { display:grid; grid-template-columns:minmax(0,1.5fr) minmax(280px,1fr); gap:40px; align-items:start; }
-.overview h1 { font-size:clamp(1.9rem,4.2vw,2.9rem); letter-spacing:-.03em; line-height:1.08; }
-.overview .for { margin:14px 0 0; color:var(--muted); font-size:.95rem; }
-.lede { font-size:1.05rem; max-width:62ch; margin-top:16px; }
-.status-panel { border:1px solid var(--line); border-radius:var(--radius); padding:4px 18px; background:var(--surface); }
-.status-panel h2 { font-family:inherit; font-size:.8rem; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); padding:14px 0 6px; font-weight:600; }
-.status-panel dl { margin:0; }
-.status-panel .row { display:flex; justify-content:space-between; gap:16px; padding:9px 0; border-top:1px solid var(--line); font-size:.9rem; }
-.status-panel dt { color:var(--muted); } .status-panel dd { margin:0; font-weight:600; text-align:right; }
-.metrics { display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); margin-top:36px; border:1px solid var(--line); border-radius:var(--radius); background:var(--surface); }
-.metric { padding:18px 20px 16px; }
-.metric + .metric { border-left:1px solid var(--line); }
-.metric .fig { font-size:1.9rem; font-weight:700; letter-spacing:-.02em; line-height:1.1; font-variant-numeric:tabular-nums; }
-.metric .fig small { font-size:1rem; color:var(--muted); font-weight:500; }
-.metric .lab { font-size:.875rem; margin-top:6px; color:var(--ink); }
-.meter { height:4px; border-radius:2px; background:var(--line); margin-top:12px; overflow:hidden; }
-.meter i { display:block; height:100%; background:var(--accent); transform-origin:left; }
-.meter.warn i { background:var(--warn); }
-.metric .stat { font-size:.8rem; color:var(--muted); margin-top:6px; }
 abbr[title] { text-decoration:underline dotted; text-underline-offset:3px; cursor:help; }
 
-/* Priority tiers */
-.tiers { border:1px solid var(--line); background:var(--surface); border-radius:var(--radius); overflow:hidden; }
+/* Top bar: outlined brand pill, pill navigation, tools */
+.site { position:sticky; top:0; z-index:50; padding:16px 0 10px; background:linear-gradient(180deg,rgba(236,236,236,.92),rgba(236,236,236,0)); backdrop-filter:blur(6px); }
+.site-in { max-width:1240px; margin:0 auto; padding:0 28px; display:flex; align-items:center; gap:16px; }
+.brand { display:inline-flex; align-items:center; gap:10px; color:var(--ink); text-decoration:none; font:400 1.45rem/1 var(--display); letter-spacing:-.01em; padding:10px 20px; border:1px solid var(--ink); border-radius:999px; white-space:nowrap; background:rgba(255,255,255,.35); }
+.brand svg { flex:none; }
+.nav { display:flex; gap:2px; margin-left:auto; min-width:0; overflow-x:auto; scrollbar-width:none; background:rgba(255,255,255,.78); border-radius:999px; padding:5px; box-shadow:0 1px 0 rgba(255,255,255,.8) inset, 0 6px 20px rgba(60,55,30,.06); }
+.nav::-webkit-scrollbar { display:none; }
+.nav a { color:var(--ink); text-decoration:none; font-size:.9rem; padding:9px 13px; border-radius:999px; white-space:nowrap; transition:background-color .18s var(--ease-out), color .18s var(--ease-out); }
+.nav a[aria-current="true"] { background:var(--dark); color:#fff; }
+.site-tools { display:flex; align-items:center; gap:8px; }
+.status-pill { display:inline-flex; align-items:center; gap:8px; font-size:.85rem; background:rgba(255,255,255,.78); border-radius:999px; padding:11px 16px; white-space:nowrap; box-shadow:0 6px 20px rgba(60,55,30,.06); }
+.status-pill i { width:9px; height:9px; border-radius:50%; background:var(--yellow); box-shadow:0 0 0 2px var(--ink); flex:none; }
+.lang { display:inline-flex; background:rgba(255,255,255,.78); border-radius:999px; padding:4px; box-shadow:0 6px 20px rgba(60,55,30,.06); }
+.lang button { border:0; background:transparent; color:var(--ink); padding:8px 14px; font:inherit; font-size:.85rem; cursor:pointer; min-height:36px; border-radius:999px; transition:background-color .18s var(--ease-out), color .18s var(--ease-out), transform .16s var(--ease-out); }
+.lang button[aria-pressed="true"] { background:var(--dark); color:#fff; }
+.lang button:active { transform:scale(.96); }
+
+/* Sections */
+main section { padding:44px 0 4px; }
+.sec-head { display:flex; justify-content:space-between; align-items:end; gap:16px 32px; flex-wrap:wrap; margin-bottom:22px; }
+.sec-head h2 { font-size:clamp(1.7rem,3vw,2.3rem); line-height:1.12; }
+.sec-head p { margin:8px 0 0; max-width:66ch; color:var(--muted); }
+
+/* Overview */
+main section.overview { padding:36px 0 8px; }
+.ov-grid { display:grid; grid-template-columns:minmax(0,1.5fr) minmax(0,1fr); gap:32px; align-items:end; }
+.overview h1 { font-size:clamp(2.4rem,5.2vw,4rem); line-height:1.02; letter-spacing:-.025em; font-weight:300; }
+.overview .for { margin:16px 0 0; color:var(--muted); font-size:.95rem; }
+.lede { font-size:1.05rem; max-width:60ch; margin-top:14px; }
+.bignums { display:flex; justify-content:flex-end; gap:clamp(18px,3vw,44px); flex-wrap:wrap; }
+.bignum { display:flex; flex-direction:column; }
+.bignum b { font:300 clamp(2.8rem,5vw,4.4rem)/1 var(--display); letter-spacing:-.03em; font-variant-numeric:tabular-nums; }
+.bignum span { font-size:.9rem; color:var(--muted); margin-top:4px; }
+.metrics { display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:14px 18px; margin-top:34px; }
+.metric { display:flex; flex-direction:column; gap:8px; min-width:0; }
+.metric .lab { font-size:.88rem; min-height:2.8em; line-height:1.35; }
+.pill-meter { height:46px; border-radius:999px; background:var(--hatch), rgba(255,255,255,.6); border:1px solid rgba(35,35,35,.12); overflow:hidden; }
+.pill-meter i { display:flex; align-items:center; height:100%; min-width:62px; border-radius:999px; background:var(--dark); color:#fff; padding:0 16px; font-style:normal; font-size:.85rem; font-variant-numeric:tabular-nums; transform-origin:left; }
+.pill-meter.warn i { background:var(--yellow); color:var(--ink); }
+.metric .fig { font:300 1.9rem/1 var(--display); letter-spacing:-.02em; font-variant-numeric:tabular-nums; padding:0 6px; }
+.metric .fig small { font-size:1rem; color:var(--muted); }
+
+/* Cards */
+.card, .panel, .tiers, .ghat, .tscroll, .state.panel { background:linear-gradient(160deg,var(--card-a),var(--card-b)); border-radius:var(--r-lg); box-shadow:0 1px 0 rgba(255,255,255,.9) inset, 0 18px 40px -24px rgba(70,60,20,.28), 0 0 0 1px rgba(255,255,255,.6); }
+.bento { display:grid; grid-template-columns:minmax(0,2fr) minmax(280px,1fr); gap:20px; align-items:start; }
+.status-panel { background:var(--dark); color:var(--on-dark); border-radius:var(--r-lg); padding:22px 24px 14px; box-shadow:0 24px 40px -26px rgba(20,20,10,.6); }
+.status-panel h2 { font:300 1.5rem/1.1 var(--display); margin-bottom:10px; }
+.status-panel dl { margin:0; }
+.status-panel .row { display:flex; justify-content:space-between; align-items:center; gap:16px; padding:13px 0; border-top:1px dashed rgba(246,244,234,.2); font-size:.92rem; }
+.status-panel dt { color:var(--on-dark-muted); display:flex; align-items:center; gap:10px; }
+.status-panel dt::before { content:""; width:8px; height:8px; border-radius:50%; background:var(--yellow); flex:none; }
+.status-panel dd { margin:0; text-align:right; }
+.status-panel .num { font-family:var(--display); font-weight:300; font-size:1.2rem; }
+
+/* Priority */
+.tiers { overflow:hidden; }
+.tier { display:grid; grid-template-columns:minmax(150px,210px) 1fr; gap:6px 24px; padding:20px 26px; border-bottom:1px dashed var(--dash); align-items:center; }
 .tier:last-child { border-bottom:0; }
-.tier { display:grid; grid-template-columns:minmax(150px,220px) 1fr; gap:6px 24px; padding:16px 20px; border-bottom:1px solid var(--line); align-items:baseline; }
-.tier-label { font-weight:700; font-size:.95rem; display:flex; align-items:center; gap:8px; }
-.tier-first .tier-label { color:var(--accent-ink); }
-.tier-names { list-style:none; margin:0; padding:0; display:flex; flex-wrap:wrap; gap:8px 28px; }
-.tier-names li { display:flex; gap:8px; align-items:baseline; }
-.tier-names a { font-weight:600; font-size:1.05rem; color:var(--ink); text-decoration-color:var(--line-strong); transition:text-decoration-color .15s var(--ease-out); }
-.tier-names .num { font-weight:700; }
-.caveat { font-size:.92rem; max-width:72ch; margin:14px 0 0; color:var(--muted); }
+.tier-label { font:400 1.1rem/1.2 var(--display); display:flex; align-items:center; gap:10px; }
+.tier-label::before { content:""; width:12px; height:12px; border-radius:50%; background:var(--line-strong); flex:none; }
+.tier-first .tier-label::before { background:var(--bad); }
+.tier-next .tier-label::before { background:var(--yellow); box-shadow:0 0 0 1px var(--ink); }
+.tier-names { list-style:none; margin:0; padding:0; display:flex; flex-wrap:wrap; gap:10px 14px; }
+.tier-names li { display:flex; gap:8px; align-items:baseline; background:#fff; border-radius:999px; padding:8px 8px 8px 18px; box-shadow:0 0 0 1px var(--line); }
+.tier-names a { font-weight:500; text-decoration:none; }
+.tier-names .num { font:300 1.25rem/1 var(--display); }
+.tier-names .muted { padding-right:10px; }
+.caveat { font-size:.92rem; max-width:74ch; margin:16px 6px 0; color:var(--muted); }
 .caveat + .caveat { margin-top:6px; }
-.help { margin-top:16px; } .help p { max-width:68ch; }
+.help { margin:10px 6px 0; } .help p { max-width:68ch; }
 
 /* Controls */
-.controls { display:flex; flex-wrap:wrap; gap:12px 20px; align-items:end; margin-bottom:16px; }
-.field { display:flex; flex-direction:column; gap:4px; min-width:0; }
-.field > label, .field > .fl { font-size:.78rem; font-weight:600; color:var(--muted); }
-select, input[type=search] { font:inherit; font-size:.9rem; min-height:40px; padding:0 12px; border:1px solid var(--line-strong); border-radius:var(--radius); background:var(--surface); color:var(--ink); max-width:100%; transition:border-color .15s var(--ease-out); }
-input[type=search] { min-width:220px; }
-select:hover, input[type=search]:hover { border-color:var(--muted); }
-.seg { display:inline-flex; border:1px solid var(--line-strong); border-radius:var(--radius); overflow:hidden; background:var(--surface); }
-.seg button { border:0; border-right:1px solid var(--line); background:transparent; color:var(--ink); font:inherit; font-size:.9rem; min-height:40px; padding:0 14px; cursor:pointer; transition:background-color .15s var(--ease-out), color .15s var(--ease-out), transform .16s var(--ease-out); }
-.seg button:last-child { border-right:0; }
-.seg button[aria-pressed="true"] { background:var(--teal-soft); color:var(--ink); font-weight:600; box-shadow:inset 0 0 0 1px var(--line-strong); }
-.seg button:active { transform:scale(.97); }
-.btn { background:var(--accent); color:var(--on-accent); border:0; border-radius:var(--radius); padding:0 18px; font:inherit; font-weight:600; cursor:pointer; min-height:44px; transition:transform .16s var(--ease-out), filter .16s var(--ease-out), background-color .16s var(--ease-out); -webkit-tap-highlight-color:transparent; }
+.controls { display:flex; flex-wrap:wrap; gap:14px 20px; align-items:end; margin-bottom:18px; }
+.field { display:flex; flex-direction:column; gap:6px; min-width:0; }
+.field > label, .field > .fl { font-size:.8rem; color:var(--muted); padding-left:6px; }
+select, input[type=search] { font:inherit; font-size:.92rem; min-height:44px; padding:0 18px; border:1px solid rgba(35,35,35,.14); border-radius:999px; background:rgba(255,255,255,.85); color:var(--ink); max-width:100%; transition:border-color .15s var(--ease-out), box-shadow .15s var(--ease-out); }
+input[type=search] { min-width:230px; }
+select:hover, input[type=search]:hover { border-color:var(--ink); }
+.seg { display:inline-flex; gap:2px; padding:4px; border-radius:999px; background:rgba(255,255,255,.78); box-shadow:0 0 0 1px rgba(35,35,35,.08); }
+.seg button { border:0; background:transparent; color:var(--ink); font:inherit; font-size:.9rem; min-height:36px; padding:0 16px; border-radius:999px; cursor:pointer; transition:background-color .18s var(--ease-out), color .18s var(--ease-out), transform .16s var(--ease-out); }
+.seg button[aria-pressed="true"] { background:var(--dark); color:#fff; }
+.seg button:active { transform:scale(.96); }
+.btn { background:var(--dark); color:#fff; border:0; border-radius:999px; padding:0 26px; font:inherit; cursor:pointer; min-height:46px; transition:transform .16s var(--ease-out), background-color .16s var(--ease-out); -webkit-tap-highlight-color:transparent; }
 .btn:active { transform:scale(.97); }
-.btn.copied { background:var(--ok); color:#fff; }
-.btn.ghost { background:var(--surface); color:var(--ink); box-shadow:inset 0 0 0 1px var(--line-strong); min-height:40px; }
+.btn.copied { background:var(--ok); }
+.btn.ghost { background:rgba(255,255,255,.9); color:var(--ink); box-shadow:0 0 0 1px rgba(35,35,35,.14); min-height:42px; }
 
 /* Chart */
-.panel { background:var(--surface); border:1px solid var(--line); border-radius:var(--radius); }
-.chart-panel { padding:20px 20px 16px; }
-.chart-head { display:flex; justify-content:space-between; gap:12px 24px; flex-wrap:wrap; align-items:baseline; }
-.chart-head h3 { font-size:1.05rem; }
-.chart-sum { font-size:.9rem; color:var(--muted); margin:4px 0 0; }
-.chart-wrap { position:relative; margin-top:12px; min-height:300px; }
+.chart-panel { padding:26px 28px 20px; }
+.chart-head h3 { font-size:1.5rem; }
+.chart-sum { font-size:.92rem; color:var(--muted); margin:6px 0 0; }
+.chart-wrap { position:relative; margin-top:14px; min-height:300px; }
 .chart-wrap svg { display:block; width:100%; height:auto; overflow:visible; }
-.chart-wrap svg text { font:12px "Segoe UI Variable Text","Segoe UI",system-ui,sans-serif; fill:var(--muted); font-variant-numeric:tabular-nums; }
-.chart-wrap svg .evt { fill:var(--ink); font-weight:600; font-size:12.5px; }
-.grid-line { stroke:var(--line); stroke-width:1; }
-.zone { fill:var(--bad); opacity:.07; }
-.limit-line { stroke:var(--bad); stroke-width:1.5; stroke-dasharray:6 4; }
-.series { fill:none; stroke:var(--teal); stroke-width:2; stroke-linejoin:round; }
+.chart-wrap svg text { font:12px var(--text); fill:var(--muted); font-variant-numeric:tabular-nums; }
+.chart-wrap svg .evt { fill:var(--ink); font-size:12.5px; font-weight:500; }
+.grid-line { stroke:var(--dash); stroke-width:1; stroke-dasharray:2 4; }
+.zone { fill:var(--yellow); opacity:.28; }
+.limit-line { stroke:var(--ink); stroke-width:1.2; stroke-dasharray:6 4; }
+.series { fill:none; stroke:var(--ink); stroke-width:2.2; stroke-linecap:round; stroke-linejoin:round; }
 .pt { cursor:pointer; outline:none; }
 .pt .hit { fill:transparent; }
-.pt .mk-in { fill:var(--teal); stroke:var(--surface); stroke-width:2; }
-.pt .mk-out { fill:var(--bad); stroke:var(--surface); stroke-width:2; }
-.pt .mk-miss { fill:var(--surface); stroke:var(--muted); stroke-width:1.5; stroke-dasharray:2 2; }
+.pt .mk-in { fill:var(--ink); stroke:#fff; stroke-width:2; }
+.pt .mk-out { fill:var(--bad); stroke:#fff; stroke-width:2; }
+.pt .mk-miss { fill:#fff; stroke:var(--muted); stroke-width:1.5; stroke-dasharray:2 2; }
 .pt .ring { fill:none; stroke:var(--ink); stroke-width:2; opacity:0; transition:opacity .12s var(--ease-out); }
 .pt:hover .ring, .pt:focus-visible .ring { opacity:1; }
-.tip { position:absolute; z-index:5; pointer-events:none; background:var(--ink); color:var(--bg); border-radius:var(--radius); padding:10px 12px; font-size:.82rem; line-height:1.4; width:max-content; max-width:260px; box-shadow:0 6px 18px rgba(0,0,0,.25); opacity:0; transform:translateY(4px); transition:opacity .12s var(--ease-out), transform .12s var(--ease-out); }
+.tip { position:absolute; z-index:5; pointer-events:none; background:var(--dark); color:var(--on-dark); border-radius:var(--r-sm); padding:12px 14px; font-size:.82rem; line-height:1.4; width:max-content; max-width:260px; box-shadow:0 14px 30px -10px rgba(20,20,10,.5); opacity:0; transform:translateY(4px); transition:opacity .12s var(--ease-out), transform .12s var(--ease-out); }
 .tip.on { opacity:1; transform:none; }
-.tip b { display:block; font-size:.95rem; margin-bottom:2px; }
-.tip .t-sub { opacity:.72; }
-.legend { display:flex; flex-wrap:wrap; gap:6px 20px; margin:12px 0 0; padding:0; list-style:none; font-size:.82rem; color:var(--muted); }
-.legend li { display:flex; align-items:center; gap:8px; }
-.legend svg { flex:none; }
-.chart-foot { display:flex; justify-content:space-between; gap:12px; flex-wrap:wrap; align-items:center; margin-top:14px; padding-top:12px; border-top:1px solid var(--line); }
-.chart-foot p { margin:0; font-size:.82rem; color:var(--muted); max-width:70ch; }
+.tip b { display:block; font:400 1.05rem var(--display); margin-bottom:2px; }
+.tip .t-sub { color:var(--on-dark-muted); }
+.legend { display:flex; flex-wrap:wrap; gap:8px 22px; margin:14px 0 0; padding:0; list-style:none; font-size:.84rem; color:var(--muted); }
+.legend li { display:flex; align-items:center; gap:8px; } .legend svg { flex:none; }
+.chart-foot { display:flex; justify-content:space-between; gap:12px; flex-wrap:wrap; align-items:center; margin-top:16px; padding-top:14px; border-top:1px dashed var(--dash); }
+.chart-foot p { margin:0; font-size:.84rem; color:var(--muted); max-width:70ch; }
 
 /* States */
-.state { display:grid; place-items:center; text-align:center; gap:6px; padding:44px 20px; min-height:200px; color:var(--muted); }
-.state b { color:var(--ink); font-size:1rem; }
+.state { display:grid; place-items:center; text-align:center; gap:8px; padding:46px 20px; min-height:200px; color:var(--muted); }
+.state b { color:var(--ink); font:400 1.2rem var(--display); }
 .state.err b { color:var(--bad); }
 .skeleton { display:none; }
-.js .chart-wrap:not(.ready):not(.failed) .skeleton { display:block; height:300px; border-radius:var(--radius);
-  background:linear-gradient(90deg,var(--line) 0%,var(--bg) 50%,var(--line) 100%); background-size:200% 100%; }
+.js .chart-wrap:not(.ready):not(.failed) .skeleton { display:block; height:300px; border-radius:var(--r-md); background:linear-gradient(90deg,var(--line) 0%,#fbf8ea 50%,var(--line) 100%); background-size:200% 100%; }
 .chart-wrap.ready .skeleton, .chart-wrap.failed .skeleton { display:none; }
 .noscript-msg { padding:20px; }
 
 /* Tables */
-.tscroll { overflow-x:auto; border:1px solid var(--line); border-radius:var(--radius); max-width:100%; background:var(--surface); }
-table { border-collapse:collapse; width:100%; font-size:.875rem; }
-th, td { text-align:left; padding:10px 12px; border-bottom:1px solid var(--line); vertical-align:top; white-space:nowrap; }
+.tscroll { overflow-x:auto; max-width:100%; padding:6px 10px; }
+table { border-collapse:collapse; width:100%; font-size:.9rem; }
+th, td { text-align:left; padding:14px 14px; border-bottom:1px dashed var(--dash); vertical-align:top; white-space:nowrap; }
 tbody tr:last-child td { border-bottom:0; }
-th { background:var(--side); font-weight:600; color:var(--muted); font-size:.78rem; position:sticky; top:0; }
+th { font-weight:400; color:var(--muted); font-size:.82rem; background:transparent; }
 td.num { font-variant-numeric:tabular-nums; }
-td.src { color:var(--muted); font-size:.8rem; }
-td.hl { background:var(--hl); }
-.tag { display:inline-flex; align-items:center; gap:5px; padding:2px 8px; border-radius:4px; font-size:.75rem; font-weight:600; white-space:nowrap; }
+td.src { color:var(--muted); font-size:.82rem; }
+td.hl { background:var(--yellow-soft); }
+.tag { display:inline-flex; align-items:center; gap:5px; padding:3px 12px; border-radius:999px; font-size:.78rem; white-space:nowrap; }
 .tag-bad { background:var(--bad-bg); color:var(--bad); }
 .tag-ok { background:var(--ok-bg); color:var(--ok); }
 .tag-low { background:var(--low-bg); color:var(--low); }
 .tag-miss { background:var(--miss-bg); color:var(--miss); }
-.tag-warn { background:var(--warn-bg); color:var(--warn); }
-.sev { display:inline-flex; align-items:center; gap:7px; font-weight:600; font-size:.82rem; }
+.tag-warn { background:var(--yellow-soft); color:var(--yellow-ink); }
+.sev { display:inline-flex; align-items:center; gap:7px; font-size:.8rem; padding:4px 12px; border-radius:999px; white-space:nowrap; }
 .sev svg { flex:none; }
-.sev-critical { color:var(--bad); } .sev-high { color:var(--warn); } .sev-moderate { color:var(--muted); }
-.sev-summary { display:flex; flex-wrap:wrap; gap:8px 28px; margin:0 0 16px; padding:0; list-style:none; }
-.sev-summary li { display:flex; align-items:baseline; gap:8px; }
-.sev-summary b { font-size:1.6rem; font-variant-numeric:tabular-nums; letter-spacing:-.02em; }
-.inc-count { font-size:.875rem; color:var(--muted); margin:12px 0 8px; }
-.inc-table td:nth-child(2) strong { font-weight:600; }
-.inc-more { display:flex; justify-content:center; margin-top:14px; }
+.sev-critical { background:var(--dark); color:#fff; }
+.sev-high { background:var(--yellow); color:var(--ink); }
+.sev-moderate { box-shadow:inset 0 0 0 1px var(--ink); color:var(--ink); }
+.sev-summary { display:flex; flex-wrap:wrap; gap:10px 34px; margin:0 0 22px; padding:0; list-style:none; }
+.sev-summary li { display:flex; align-items:center; gap:12px; }
+.sev-summary b { font:300 3rem/1 var(--display); letter-spacing:-.03em; font-variant-numeric:tabular-nums; }
+.sev-summary b.sev-critical, .sev-summary b.sev-high, .sev-summary b.sev-moderate { background:none; box-shadow:none; color:var(--ink); padding:0; }
+.inc-count { font-size:.88rem; color:var(--muted); margin:14px 6px 8px; }
+.inc-table td:nth-child(2) strong { font-weight:500; }
+.inc-more { display:flex; justify-content:center; margin-top:18px; }
 tr[hidden] { display:none; }
 
-/* Ghat evidence cards */
-.tier-h { font-size:1rem; margin:32px 0 8px; color:var(--muted); font-weight:600; }
-.ghat { background:var(--surface); border:1px solid var(--line); border-radius:var(--radius); padding:18px 20px; margin:10px 0; scroll-margin-top:80px; }
-.ghat-head { display:grid; grid-template-columns:auto 1fr auto; gap:14px; align-items:start; }
-.rank { width:36px; height:36px; border-radius:6px; background:var(--ink); color:var(--bg); display:grid; place-items:center; font-weight:700; font-variant-numeric:tabular-nums; }
-.ghat h4 { font-size:1.1rem; line-height:1.3; letter-spacing:-.01em; }
-.meta { display:flex; flex-wrap:wrap; gap:6px 10px; align-items:center; margin-top:6px; font-size:.875rem; }
-.chip { display:inline-block; padding:2px 9px; border-radius:4px; background:var(--accent-soft); color:var(--accent-ink); font-weight:600; font-size:.8rem; white-space:nowrap; }
-.chip-quiet { background:transparent; color:var(--ink); box-shadow:inset 0 0 0 1px var(--line-strong); }
+/* Ghat cards */
+.tier-h { font:300 1.4rem var(--display); margin:34px 0 10px; }
+.ghat { padding:24px 28px; margin:14px 0; scroll-margin-top:96px; }
+.ghat-head { display:grid; grid-template-columns:auto 1fr auto; gap:16px; align-items:start; }
+.rank { width:44px; height:44px; border-radius:50%; background:var(--dark); color:#fff; display:grid; place-items:center; font:300 1.3rem var(--display); font-variant-numeric:tabular-nums; }
+.ghat h4 { font-size:1.35rem; line-height:1.25; }
+.meta { display:flex; flex-wrap:wrap; gap:6px 10px; align-items:center; margin-top:8px; font-size:.875rem; }
+.chip { display:inline-block; padding:3px 12px; border-radius:999px; background:var(--yellow); color:var(--ink); font-size:.8rem; white-space:nowrap; }
+.chip-quiet { background:transparent; box-shadow:inset 0 0 0 1px var(--ink); }
 .score { text-align:right; display:flex; flex-direction:column; }
-.score .big { font-size:1.7rem; font-weight:700; font-variant-numeric:tabular-nums; line-height:1.1; letter-spacing:-.02em; }
-.bar { position:relative; height:10px; background:var(--line); border-radius:5px; margin:14px 0 8px; overflow:hidden; }
-.bar-range { position:absolute; top:0; bottom:0; background:var(--accent-soft); box-shadow:inset 0 0 0 1px var(--accent); }
-.bar-fill { position:absolute; top:3px; bottom:3px; left:0; background:var(--accent); border-radius:3px; }
+.score .big { font:300 2.6rem/1 var(--display); letter-spacing:-.03em; font-variant-numeric:tabular-nums; }
+.bar { position:relative; height:22px; background:var(--hatch), rgba(255,255,255,.6); border:1px solid rgba(35,35,35,.12); border-radius:999px; margin:18px 0 10px; overflow:hidden; }
+.bar-range { position:absolute; top:0; bottom:0; background:var(--yellow-soft); box-shadow:inset 0 0 0 1.5px var(--ink); border-radius:999px; }
+.bar-fill { position:absolute; top:3px; bottom:3px; left:3px; background:var(--dark); border-radius:999px; }
 .reason { margin:8px 0 4px; }
-.note { background:var(--warn-bg); color:var(--ink); border-radius:var(--radius); padding:8px 12px; font-size:.9rem; }
+.note { background:var(--yellow-soft); border-radius:var(--r-sm); padding:10px 14px; font-size:.9rem; }
 details { margin-top:8px; }
-summary { cursor:pointer; color:var(--teal-ink); font-weight:600; padding:8px 0; list-style:none; display:flex; align-items:center; gap:8px; min-height:40px; }
+summary { cursor:pointer; font-weight:500; padding:8px 0; list-style:none; display:flex; align-items:center; gap:10px; min-height:40px; }
 summary::-webkit-details-marker { display:none; }
-summary::before { content:""; flex:none; width:7px; height:7px; border-right:2px solid currentColor; border-bottom:2px solid currentColor; transform:rotate(-45deg); transition:transform .2s var(--ease-out); margin:0 3px 2px 1px; }
-details[open] > summary::before { transform:rotate(45deg); }
+summary::before { content:""; flex:none; width:22px; height:22px; border-radius:50%; background-color:#fff; box-shadow:0 0 0 1px var(--line-strong); background-image:linear-gradient(var(--ink),var(--ink)), linear-gradient(var(--ink),var(--ink)); background-size:9px 1.5px, 1.5px 9px; background-position:center; background-repeat:no-repeat; }
+details[open] > summary::before { background-size:9px 1.5px, 0 0; }
 details.inner { margin-top:12px; }
-h5 { font-size:.95rem; margin:18px 0 8px; }
-.brief { padding:20px; }
-.brief h3 { font-size:1.05rem; margin:18px 0 6px; } .brief h3:first-child { margin-top:0; }
+h5 { font:400 1.05rem var(--display); margin:20px 0 10px; }
+.brief { padding:26px 28px; }
+.brief h3 { font-size:1.3rem; margin:20px 0 6px; } .brief h3:first-child { margin-top:0; }
 .brief ul, .brief ol { padding-left:22px; margin:6px 0; }
-.brief-bar { display:flex; gap:10px 16px; align-items:center; justify-content:space-between; flex-wrap:wrap; margin-bottom:12px; padding-bottom:12px; border-bottom:1px solid var(--line); }
-.howto li { margin:8px 0; max-width:78ch; }
-footer { margin-top:64px; padding:28px 0 48px; border-top:1px solid var(--line); font-size:.85rem; color:var(--muted); }
+.brief-bar { display:flex; gap:10px 16px; align-items:center; justify-content:space-between; flex-wrap:wrap; margin-bottom:14px; padding-bottom:14px; border-bottom:1px dashed var(--dash); }
+.howto li { margin:10px 0; max-width:80ch; }
+footer { margin-top:64px; padding:28px 0 56px; border-top:1px dashed var(--line-strong); font-size:.85rem; color:var(--muted); }
 main { padding-bottom:16px; }
 
 @media (hover:hover) and (pointer:fine) {
-  .nav a:hover { color:var(--ink); background:var(--teal-soft); }
-  .lang button[aria-pressed="false"]:hover { background:var(--teal-soft); }
-  .tier-names a:hover { text-decoration-color:currentColor; }
-  .seg button[aria-pressed="false"]:hover { background:var(--bg); }
-  .btn:hover { filter:brightness(1.08); }
-  .btn.ghost:hover { background:var(--teal-soft); filter:none; }
-  tbody tr:hover td { background:var(--bg); }
+  .nav a:not([aria-current="true"]):hover { background:rgba(255,226,120,.45); }
+  .lang button[aria-pressed="false"]:hover, .seg button[aria-pressed="false"]:hover { background:rgba(255,217,90,.4); }
+  .tier-names li { transition:transform .18s var(--ease-out), box-shadow .18s var(--ease-out); }
+  .tier-names li:hover { transform:translateY(-2px); box-shadow:0 0 0 1px var(--ink); }
+  .btn:hover { background:#000; } .btn.ghost:hover { background:var(--yellow-soft); }
+  tbody tr:hover td { background:rgba(255,217,90,.16); }
 }
 @media (prefers-reduced-motion: no-preference) {
   html { scroll-behavior:smooth; }
   details[open] > *:not(summary) { animation:reveal .22s var(--ease-out); }
   @keyframes reveal { from { opacity:0; transform:translateY(-4px); } to { opacity:1; transform:none; } }
-  .overview .ov-grid > *, .metric { animation:rise .45s var(--ease-out) backwards; }
+  .overview .ov-grid > *, .metric { animation:rise .5s var(--ease-out) backwards; }
   .ov-grid > *:nth-child(2) { animation-delay:.06s; }
   .metric:nth-child(2) { animation-delay:.05s; } .metric:nth-child(3) { animation-delay:.1s; }
   .metric:nth-child(4) { animation-delay:.15s; } .metric:nth-child(5) { animation-delay:.2s; }
-  @keyframes rise { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:none; } }
-  .meter i { animation:grow .8s var(--ease-out) .2s backwards; }
-  @keyframes grow { from { transform:scaleX(0); } }
+  @keyframes rise { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:none; } }
+  .pill-meter i { animation:grow .9s var(--ease-out) .25s backwards; }
+  @keyframes grow { from { transform:scaleX(.08); } }
   .js .bar-fill, .js .bar-range { clip-path:inset(0 100% 0 0); }
   .js .ghat.in .bar-range { clip-path:inset(0); transition:clip-path .7s var(--ease-out) .05s; }
   .js .ghat.in .bar-fill { clip-path:inset(0); transition:clip-path .7s var(--ease-out) .15s; }
   .ghat:target { animation:flash 1.4s var(--ease-out); }
-  @keyframes flash { 0% { box-shadow:0 0 0 3px var(--teal-soft); } 100% { box-shadow:0 0 0 3px transparent; } }
+  @keyframes flash { 0% { box-shadow:0 0 0 4px var(--yellow); } 100% { box-shadow:0 0 0 4px transparent; } }
   .btn.copied { animation:pop .28s var(--ease-out); }
   @keyframes pop { 40% { transform:scale(1.04); } }
   .chart-wrap.ready svg.draw .series { animation:sweep .6s var(--ease-out); }
@@ -263,38 +265,67 @@ main { padding-bottom:16px; }
   tr.fresh { animation:reveal .22s var(--ease-out); }
 }
 
-@media (max-width:960px) {
-  .ov-grid { grid-template-columns:1fr; gap:28px; }
-  .metrics { grid-template-columns:repeat(2,minmax(0,1fr)); }
-  .metric:nth-child(odd) { border-left:0; }
-  .metric:nth-child(n+3) { border-top:1px solid var(--line); }
-  .metric:nth-child(5) { grid-column:1 / -1; }
+@media (max-width:1100px) {
+  .site-in { flex-wrap:wrap; gap:10px 12px; }
+  .brand { order:1; margin-right:auto; } .site-tools { order:2; }
+  .nav { order:3; flex-basis:100%; margin-left:0; }
+  html { scroll-padding-top:128px; }
+  .ghat { scroll-margin-top:128px; }
 }
-@media (max-width:900px) {
-  .site { position:sticky; top:0; width:auto; height:auto; flex-direction:row; flex-wrap:wrap; align-items:center; gap:0 12px; padding:8px 16px 0; border-right:0; border-bottom:1px solid var(--side-line); overflow:visible; }
-  .brand { order:1; flex:1; padding:4px 0; }
-  .site-tools { order:2; flex-direction:row; align-items:center; }
+@media (max-width:960px) {
+  .ov-grid, .bento { grid-template-columns:minmax(0,1fr); }
+  .bignums { justify-content:flex-start; }
+  .metrics { grid-template-columns:repeat(2,minmax(0,1fr)); }
   .status-pill { display:none; }
-  .nav { order:3; flex:none; flex-basis:100%; flex-direction:row; overflow-x:auto; margin:4px -8px 0; padding-bottom:6px; scrollbar-width:none; }
-  .nav::-webkit-scrollbar { display:none; }
-  main { margin-left:0; }
-  html { scroll-padding-top:104px; }
 }
 @media (max-width:720px) {
-  .wrap { padding:0 16px; }
-  main section { padding-top:40px; }
-  main section.overview { padding-top:32px; }
-  .tier { grid-template-columns:1fr; padding:14px 16px; }
-  .ghat { padding:16px; }
+  .wrap, .site-in { padding:0 16px; }
+  main section { padding-top:34px; }
+  .tier { grid-template-columns:1fr; padding:16px 18px; }
+  .ghat, .brief, .chart-panel { padding:20px 18px; border-radius:24px; }
   .ghat-head { grid-template-columns:auto 1fr; }
-  .score { grid-column:1 / -1; flex-direction:row; gap:10px; align-items:baseline; text-align:left; }
-  .chart-panel { padding:16px 12px 12px; }
+  .score { grid-column:1 / -1; flex-direction:row; gap:12px; align-items:baseline; text-align:left; }
   .controls .field { flex:1 1 140px; }
   input[type=search] { min-width:0; width:100%; }
-  .seg { width:100%; } .seg button { flex:1; padding:0 8px; }
+  .seg { width:100%; flex-wrap:wrap; border-radius:22px; } .seg button { flex:1 1 auto; padding:0 12px; }
+  .brand { font-size:1.2rem; padding:8px 16px; }
 }
-@media (max-width:420px) { .metrics { grid-template-columns:1fr; } .metric { border-left:0 !important; } .metric + .metric { border-top:1px solid var(--line); } .metric:nth-child(5) { grid-column:auto; } }
-@media print { .site, .controls, .btn { display:none; } main { margin-left:0; } }
+@media (max-width:460px) { .metrics { grid-template-columns:1fr; } .metric .lab { min-height:0; } }
+@media print { .site, .controls, .btn { display:none; } body { background:#fff; } }
+
+/* Files tab */
+body.view-files #view-dash { display:none; }
+body:not(.view-files) #files { display:none; }
+#files.view { padding:36px 0 48px; }
+.drop { display:flex; flex-direction:column; align-items:center; text-align:center; gap:10px; padding:38px 24px; border-radius:var(--r-lg); border:1.5px dashed var(--ink); background:linear-gradient(160deg,rgba(255,255,255,.9),rgba(255,247,214,.7)); transition:background-color .18s var(--ease-out), transform .18s var(--ease-out); }
+.drop b { font:400 1.35rem var(--display); }
+.drop.over { background:var(--yellow-soft); transform:scale(1.01); }
+.file-msg { color:var(--bad); font-size:.9rem; margin:10px 6px 0; min-height:1.2em; }
+.sec-sub { margin:20px 6px 10px; } .sec-sub h3 { font-size:1.4rem; font-weight:300; }
+.files { list-style:none; margin:0; padding:0; display:grid; gap:10px; }
+.file { display:flex; align-items:center; gap:14px; padding:12px 14px 12px 12px; border-radius:var(--r-md); background:#fff; box-shadow:0 0 0 1px var(--line); flex-wrap:wrap; }
+.file.on { box-shadow:0 0 0 1.5px var(--ink); }
+.kind { width:46px; height:46px; border-radius:50%; display:grid; place-items:center; font-size:.72rem; font-weight:500; flex:none; background:var(--yellow); }
+.kind-pdf { background:var(--dark); color:#fff; }
+.finfo { flex:1; min-width:160px; display:flex; flex-direction:column; word-break:break-word; }
+.fact { display:flex; gap:8px; flex-wrap:wrap; }
+.fact .btn { min-height:38px; padding:0 18px; font-size:.88rem; }
+.btn.danger:hover { background:var(--bad-bg); color:var(--bad); }
+.btn.yellow { background:var(--yellow); color:var(--ink); }
+.btn.yellow:hover { background:#ffe17f; }
+.csv-result, .pdf-prev { padding:24px 26px; margin-top:16px; }
+.csv-result h3, .pdf-prev h3 { font-size:1.3rem; margin-bottom:12px; word-break:break-word; }
+.pdf-prev iframe { width:100%; height:560px; border:0; border-radius:var(--r-md); background:#fff; }
+.status-panel code { font-family:ui-monospace,Consolas,monospace; font-size:.85rem; color:var(--yellow); }
+#file-empty { margin-top:0; }
+@media (max-width:720px) { .fact { width:100%; } .pdf-prev iframe { height:420px; } .drop { padding:28px 16px; } }
+
+@media (max-width:1480px) { .status-pill { display:none; } }
+.nav a[href="#files"] { box-shadow:inset 0 0 0 1px var(--ink); margin-left:4px; }
+.nav a[href="#files"][aria-current="true"] { box-shadow:none; }
+.bento > * { min-width:0; }
+
+
 
 </style>
 </head>
@@ -302,8 +333,8 @@ main { padding-bottom:16px; }
 <a class="skip" href="#main"><span class="l-en">Skip to content</span><span class="l-hi" lang="hi">सामग्री पर जाएँ</span></a>
 <header class="site">
   <div class="site-in">
-    <a class="brand" href="#overview"><svg width="28" height="28" viewBox="0 0 28 28" aria-hidden="true"><rect width="28" height="28" rx="6" fill="#bd5d3a"/><path d="M5 12c3-3 5-3 8 0s5 3 8 0M5 18c3-3 5-3 8 0s5 3 8 0" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"/></svg><span>Ghat Watch</span></a>
-    <nav class="nav" aria-label="Sections"><a href="#overview" aria-current=true><span class="l-en">Overview</span><span class="l-hi" lang="hi">सारांश</span></a><a href="#priority"><span class="l-en">Priority</span><span class="l-hi" lang="hi">प्राथमिकता</span></a><a href="#trends"><span class="l-en">Trends</span><span class="l-hi" lang="hi">रुझान</span></a><a href="#incidents"><span class="l-en">Incidents</span><span class="l-hi" lang="hi">घटनाएँ</span></a><a href="#ghats"><span class="l-en">Ghats</span><span class="l-hi" lang="hi">घाट</span></a><a href="#brief"><span class="l-en">Brief</span><span class="l-hi" lang="hi">सार</span></a><a href="#method"><span class="l-en">Method</span><span class="l-hi" lang="hi">विधि</span></a></nav>
+    <a class="brand" href="#overview"><svg width="26" height="26" viewBox="0 0 28 28" aria-hidden="true"><circle cx="14" cy="14" r="14" fill="#ffd95a"/><path d="M6 12c2.6-2.6 4.4-2.6 8 0s5.4 2.6 8 0M6 18c2.6-2.6 4.4-2.6 8 0s5.4 2.6 8 0" fill="none" stroke="#232323" stroke-width="2" stroke-linecap="round"/></svg><span><span class="l-en">Jal Nirikshak</span><span class="l-hi" lang="hi">जल निरीक्षक</span></span></a>
+    <nav class="nav" aria-label="Sections"><a href="#overview" aria-current=true><span class="l-en">Overview</span><span class="l-hi" lang="hi">सारांश</span></a><a href="#priority"><span class="l-en">Priority</span><span class="l-hi" lang="hi">प्राथमिकता</span></a><a href="#trends"><span class="l-en">Trends</span><span class="l-hi" lang="hi">रुझान</span></a><a href="#incidents"><span class="l-en">Incidents</span><span class="l-hi" lang="hi">घटनाएँ</span></a><a href="#ghats"><span class="l-en">Ghats</span><span class="l-hi" lang="hi">घाट</span></a><a href="#brief"><span class="l-en">Brief</span><span class="l-hi" lang="hi">सार</span></a><a href="#method"><span class="l-en">Method</span><span class="l-hi" lang="hi">विधि</span></a><a href="#files"><span class="l-en">Files</span><span class="l-hi" lang="hi">फ़ाइलें</span></a></nav>
     <div class="site-tools">
       <span class="status-pill" title="Historical MPPCB readings, 2023-2025. No live sensor feed is connected."><i aria-hidden="true"></i><span><span class="l-en">Historical data<span class="l-long"> · not live</span></span><span class="l-hi" lang="hi">पुराना डेटा<span class="l-long"> · लाइव नहीं</span></span></span></span>
       <div class="lang" role="group" aria-label="Language">
@@ -315,32 +346,30 @@ main { padding-bottom:16px; }
 </header>
 
 <main id="main">
+<div id="view-dash">
 <section id="overview" class="overview" aria-labelledby="h-over">
   <div class="wrap">
     <div class="ov-grid">
       <div>
-        <h1 id="h-over"><span class="l-en">Visarjan Ghat Watch, Bhopal</span><span class="l-hi" lang="hi">विसर्जन घाट वॉच, भोपाल</span></h1>
+        <h1 id="h-over"><span class="l-en">Jal Nirikshak, Bhopal</span><span class="l-hi" lang="hi">जल निरीक्षक, भोपाल</span></h1>
         <p class="for"><span class="l-en">For the BMC officer planning Durga visarjan, 20 October 2026</span><span class="l-hi" lang="hi">दुर्गा विसर्जन (20 अक्टूबर 2026) की योजना बनाने वाले BMC अधिकारी के लिए</span></p>
         <p class="lede"><span class="l-en">The 7 immersion ghats ranked by how often and how far their 2023-2025 water readings missed the CPCB Class B (outdoor bathing) limits for dissolved oxygen, BOD and pH. A screening aid, not a legal finding and not today’s water.</span><span class="l-hi" lang="hi">7 विसर्जन घाट, इस आधार पर क्रम में कि 2023-2025 की पानी की रीडिंग घुलित ऑक्सीजन, BOD और pH के लिए CPCB क्लास B (बाहरी स्नान) सीमा से कितनी बार और कितनी दूर बाहर रहीं। यह जाँच में मदद है, कानूनी निष्कर्ष नहीं, और आज के पानी की स्थिति नहीं।</span></p>
       </div>
-      <aside class="status-panel" aria-labelledby="h-status">
-        <h2 id="h-status"><span class="l-en">System status</span><span class="l-hi" lang="hi">सिस्टम स्थिति</span></h2>
-        <dl>
-          <div class="row"><dt><span class="l-en">Data</span><span class="l-hi" lang="hi">डेटा</span></dt><dd><span class="l-en">MPPCB reports 2023-2025</span><span class="l-hi" lang="hi">MPPCB रिपोर्ट 2023-2025</span></dd></div>
-          <div class="row"><dt><span class="l-en">Live sensors</span><span class="l-hi" lang="hi">लाइव सेंसर</span></dt><dd><span class="l-en">None connected</span><span class="l-hi" lang="hi">कोई नहीं जुड़ा</span></dd></div>
-          <div class="row"><dt><span class="l-en">Readings scored</span><span class="l-hi" lang="hi">स्कोर की रीडिंग</span></dt><dd class="num">343 <span class="l-en">of</span><span class="l-hi" lang="hi">में से</span> 360</dd></div>
-          <div class="row"><dt><span class="l-en">Yardstick</span><span class="l-hi" lang="hi">पैमाना</span></dt><dd><span class="l-en">CPCB Class B</span><span class="l-hi" lang="hi">CPCB क्लास B</span></dd></div>
-          <div class="row"><dt><span class="l-en">Ghats</span><span class="l-hi" lang="hi">घाट</span></dt><dd class="num">7</dd></div>
-        </dl>
-      </aside>
+      <div class="bignums" role="group" aria-label="Key numbers">
+        <div class="bignum"><b>7</b><span><span class="l-en">Ghats</span><span class="l-hi" lang="hi">घाट</span></span></div>
+        <div class="bignum"><b>343</b><span><span class="l-en">Readings scored</span><span class="l-hi" lang="hi">स्कोर की रीडिंग</span></span></div>
+        <div class="bignum"><b>148</b><span><span class="l-en">Outside limit</span><span class="l-hi" lang="hi">सीमा से बाहर</span></span></div>
+      </div>
     </div>
-    <div class="metrics" role="group" aria-label="Key figures"><div class="metric"><div class="fig">42 <small>/ 116</small></div><div class="lab"><span class="l-en"><abbr title="Dissolved oxygen">DO</abbr> readings below 5 mg/l</span><span class="l-hi" lang="hi"><abbr title="घुलित ऑक्सीजन">DO</abbr> रीडिंग 5 mg/l से कम</span></div><div class="meter" aria-hidden="true"><i style="width:36%"></i></div><div class="stat">36%</div></div><div class="metric"><div class="fig">100 <small>/ 112</small></div><div class="lab"><span class="l-en"><abbr title="Biochemical oxygen demand">BOD</abbr> readings above 3 mg/l</span><span class="l-hi" lang="hi"><abbr title="जैव रासायनिक ऑक्सीजन माँग">BOD</abbr> रीडिंग 3 mg/l से अधिक</span></div><div class="meter" aria-hidden="true"><i style="width:89%"></i></div><div class="stat">89%</div></div><div class="metric"><div class="fig">4 <small>/ 116</small></div><div class="lab"><span class="l-en">DO readings of 0 (all at Bairagarh)</span><span class="l-hi" lang="hi">DO रीडिंग 0 (सभी बैरागढ़ में)</span></div><div class="meter" aria-hidden="true"><i style="width:3%"></i></div><div class="stat">3%</div></div><div class="metric"><div class="fig">12 <small>/ 38</small></div><div class="lab"><span class="l-en">DO already below 5 before immersion</span><span class="l-hi" lang="hi">विसर्जन से पहले ही DO 5 से कम</span></div><div class="meter warn" aria-hidden="true"><i style="width:32%"></i></div><div class="stat">32%</div></div><div class="metric"><div class="fig">17 <small>/ 360</small></div><div class="lab"><span class="l-en">DO/BOD/pH readings not sampled</span><span class="l-hi" lang="hi">DO/BOD/pH रीडिंग नहीं ली गईं</span></div><div class="meter warn" aria-hidden="true"><i style="width:5%"></i></div><div class="stat">5%</div></div></div>
+    <div class="metrics" role="group" aria-label="Key figures"><div class="metric"><div class="lab"><span class="l-en"><abbr title="Dissolved oxygen">DO</abbr> readings below 5 mg/l</span><span class="l-hi" lang="hi"><abbr title="घुलित ऑक्सीजन">DO</abbr> रीडिंग 5 mg/l से कम</span></div><div class="pill-meter" aria-hidden="true"><i style="width:36%">36%</i></div><div class="fig">42 <small>/ 116</small></div></div><div class="metric"><div class="lab"><span class="l-en"><abbr title="Biochemical oxygen demand">BOD</abbr> readings above 3 mg/l</span><span class="l-hi" lang="hi"><abbr title="जैव रासायनिक ऑक्सीजन माँग">BOD</abbr> रीडिंग 3 mg/l से अधिक</span></div><div class="pill-meter" aria-hidden="true"><i style="width:89%">89%</i></div><div class="fig">100 <small>/ 112</small></div></div><div class="metric"><div class="lab"><span class="l-en">DO readings of 0 (all at Bairagarh)</span><span class="l-hi" lang="hi">DO रीडिंग 0 (सभी बैरागढ़ में)</span></div><div class="pill-meter" aria-hidden="true"><i style="width:3%">3%</i></div><div class="fig">4 <small>/ 116</small></div></div><div class="metric"><div class="lab"><span class="l-en">DO already below 5 before immersion</span><span class="l-hi" lang="hi">विसर्जन से पहले ही DO 5 से कम</span></div><div class="pill-meter warn" aria-hidden="true"><i style="width:32%">32%</i></div><div class="fig">12 <small>/ 38</small></div></div><div class="metric"><div class="lab"><span class="l-en">DO/BOD/pH readings not sampled</span><span class="l-hi" lang="hi">DO/BOD/pH रीडिंग नहीं ली गईं</span></div><div class="pill-meter warn" aria-hidden="true"><i style="width:5%">5%</i></div><div class="fig">17 <small>/ 360</small></div></div></div>
   </div>
 </section>
 
 <div class="wrap">
 <section id="priority" aria-labelledby="h-pri">
   <div class="sec-head"><div><h2 id="h-pri"><span class="l-en">Where the 2023-2025 readings point first</span><span class="l-hi" lang="hi">2023-2025 की रीडिंग पहले कहाँ इशारा करती हैं</span></h2></div></div>
+  <div class="bento">
+  <div>
   <div class="answer">
   <div class="tiers"><div class="tier tier-first"><div class="tier-label"><span class="l-en">Look at first</span><span class="l-hi" lang="hi">पहले देखें</span></div><ul class="tier-names"><li><a href="#g1"><span class="l-en">Bairagarh</span><span class="l-hi" lang="hi">बैरागढ़</span></a> <span class="num">47.5</span> <span class="muted small"><span class="l-en">rank</span><span class="l-hi" lang="hi">रैंक</span> 1-2</span></li><li><a href="#g2"><span class="l-en">Malikhedi</span><span class="l-hi" lang="hi">मालीखेड़ी</span></a> <span class="num">34.7</span> <span class="muted small"><span class="l-en">rank</span><span class="l-hi" lang="hi">रैंक</span> 1-6</span></li><li><a href="#g3"><span class="l-en">Shahpura</span><span class="l-hi" lang="hi">शाहपुरा</span></a> <span class="num">32.0</span> <span class="muted small"><span class="l-en">rank</span><span class="l-hi" lang="hi">रैंक</span> 2-3</span></li></ul></div><div class="tier tier-next"><div class="tier-label"><span class="l-en">Next</span><span class="l-hi" lang="hi">उसके बाद</span></div><ul class="tier-names"><li><a href="#g4"><span class="l-en">Rani Kamlapati</span><span class="l-hi" lang="hi">रानी कमलापति</span></a> <span class="num">30.1</span> <span class="muted small"><span class="l-en">rank</span><span class="l-hi" lang="hi">रैंक</span> 3-5</span></li><li><a href="#g5"><span class="l-en">Khatlapura</span><span class="l-hi" lang="hi">खटलापुरा</span></a> <span class="num">29.6</span> <span class="muted small"><span class="l-en">rank</span><span class="l-hi" lang="hi">रैंक</span> 3-5</span></li><li><a href="#g6"><span class="l-en">Hathaikheda</span><span class="l-hi" lang="hi">हथाईखेड़ा</span></a> <span class="num">25.7</span> <span class="muted small"><span class="l-en">rank</span><span class="l-hi" lang="hi">रैंक</span> 5-6</span></li></ul></div><div class="tier tier-last"><div class="tier-label"><span class="l-en">Lowest, even in the worst case</span><span class="l-hi" lang="hi">सबसे कम, सबसे बुरी स्थिति में भी</span></div><ul class="tier-names"><li><a href="#g7"><span class="l-en">Prempura</span><span class="l-hi" lang="hi">प्रेमपुरा</span></a> <span class="num">16.8</span> <span class="muted small"><span class="l-en">rank</span><span class="l-hi" lang="hi">रैंक</span> 7</span></li></ul></div></div>
   <p class="caveat"><span class="l-en">Order within a tier is not firm. Score ranges overlap: Bairagarh 34.3-62.1 and Malikhedi 25.1-52.9. Durga visarjan readings alone give the same three: Bairagarh, Shahpura, Malikhedi.</span><span class="l-hi" lang="hi">एक स्तर के भीतर क्रम पक्का नहीं है। स्कोर दायरे मिलते हैं: बैरागढ़ 34.3-62.1 और मालीखेड़ी 25.1-52.9। केवल दुर्गा विसर्जन की रीडिंग से भी वही तीन: बैरागढ़, शाहपुरा, मालीखेड़ी।</span></p>
@@ -352,6 +381,18 @@ main { padding-bottom:16px; }
     <p><span class="l-en">Each ghat is scored from 0 to 100 on dissolved oxygen, BOD and pH readings against CPCB Class B limits. A reading counts more the further it is past the limit. Missing readings are left out and shown as a range, never counted as clean.</span><span class="l-hi" lang="hi">हर घाट को घुलित ऑक्सीजन, BOD और pH की रीडिंग के आधार पर CPCB क्लास B सीमा के मुकाबले 0 से 100 अंक मिलते हैं। रीडिंग सीमा से जितनी दूर, उतना अधिक असर। छूटी रीडिंग स्कोर में नहीं गिनी जातीं और दायरे में दिखती हैं, साफ़ नहीं मानी जातीं।</span>
       <a href="#method"><span class="l-en">Full method</span><span class="l-hi" lang="hi">पूरी विधि</span></a></p>
   </details>
+  </div>
+    <aside class="status-panel" aria-labelledby="h-status">
+        <h2 id="h-status"><span class="l-en">System status</span><span class="l-hi" lang="hi">सिस्टम स्थिति</span></h2>
+        <dl>
+          <div class="row"><dt><span class="l-en">Data</span><span class="l-hi" lang="hi">डेटा</span></dt><dd><span class="l-en">MPPCB reports 2023-2025</span><span class="l-hi" lang="hi">MPPCB रिपोर्ट 2023-2025</span></dd></div>
+          <div class="row"><dt><span class="l-en">Live sensors</span><span class="l-hi" lang="hi">लाइव सेंसर</span></dt><dd><span class="l-en">None connected</span><span class="l-hi" lang="hi">कोई नहीं जुड़ा</span></dd></div>
+          <div class="row"><dt><span class="l-en">Readings scored</span><span class="l-hi" lang="hi">स्कोर की रीडिंग</span></dt><dd class="num">343 <span class="l-en">of</span><span class="l-hi" lang="hi">में से</span> 360</dd></div>
+          <div class="row"><dt><span class="l-en">Yardstick</span><span class="l-hi" lang="hi">पैमाना</span></dt><dd><span class="l-en">CPCB Class B</span><span class="l-hi" lang="hi">CPCB क्लास B</span></dd></div>
+          <div class="row"><dt><span class="l-en">Ghats</span><span class="l-hi" lang="hi">घाट</span></dt><dd class="num">7</dd></div>
+        </dl>
+      </aside>
+  </div>
 </section>
 
 <section id="trends" aria-labelledby="h-tr">
@@ -713,6 +754,40 @@ main { padding-bottom:16px; }
   <span class="l-en">Source: MPPCB Ganesh and Durga visarjan reports 2023 (Idol_immer._Report_23_CPCB.pdf), 2024 and 2025, via the hackathon dataset. Page numbers are the PDF’s own page in that year’s report. CPCB water quality criteria. Hindi text not yet proofread by a native speaker.</span><span class="l-hi" lang="hi">स्रोत: MPPCB गणेश और दुर्गा विसर्जन रिपोर्ट 2023 (Idol_immer._Report_23_CPCB.pdf), 2024 और 2025, हैकथॉन डेटासेट से। पृष्ठ संख्या उस वर्ष की रिपोर्ट PDF का पृष्ठ है। CPCB जल गुणवत्ता मानदंड। हिंदी पाठ की अभी किसी मूल भाषी ने जाँच नहीं की है।</span>
 </footer>
 </div>
+</div>
+<section id="files" class="view" aria-labelledby="h-files">
+<div class="wrap">
+  <div class="sec-head"><div>
+    <h2 id="h-files"><span class="l-en">Officer files</span><span class="l-hi" lang="hi">अधिकारी की फ़ाइलें</span></h2>
+    <p><span class="l-en">Add PDF reports and CSV readings. Files stay in this browser only; nothing is uploaded anywhere. Added readings are checked against the Class B limits but are not part of the ranking.</span><span class="l-hi" lang="hi">PDF रिपोर्ट और CSV रीडिंग जोड़ें। फ़ाइलें केवल इसी ब्राउज़र में रहती हैं; कहीं अपलोड नहीं होतीं। जोड़ी गई रीडिंग क्लास B सीमा से जाँची जाती हैं पर क्रम (रैंकिंग) में शामिल नहीं होतीं।</span></p>
+  </div></div>
+  <div class="bento">
+    <div>
+      <div class="drop" id="drop" role="group" aria-label="Add files">
+        <svg width="44" height="44" viewBox="0 0 44 44" aria-hidden="true"><circle cx="22" cy="22" r="21" fill="#fff1b8" stroke="#232323" stroke-width="1.2"/><path d="M22 29V15M22 15l-6 6M22 15l6 6" fill="none" stroke="#232323" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <b><span class="l-en">Drop PDF or CSV files here</span><span class="l-hi" lang="hi">PDF या CSV फ़ाइलें यहाँ छोड़ें</span></b>
+        <span class="muted small"><span class="l-en">PDF and CSV, up to 25 MB each</span><span class="l-hi" lang="hi">PDF और CSV, हर एक 25 MB तक</span></span>
+        <button type="button" class="btn" id="file-pick"><span class="l-en">Choose files</span><span class="l-hi" lang="hi">फ़ाइलें चुनें</span></button>
+        <input type="file" id="file-in" multiple accept=".pdf,.csv,application/pdf,text/csv" hidden>
+      </div>
+      <p class="file-msg" id="file-msg" role="status" aria-live="polite"></p>
+      <div class="sec-sub"><h3><span class="l-en">Your files</span><span class="l-hi" lang="hi">आपकी फ़ाइलें</span></h3></div>
+      <ul class="files" id="file-list"></ul>
+      <div class="state panel" id="file-empty"><b><span class="l-en">No files added yet</span><span class="l-hi" lang="hi">अभी कोई फ़ाइल नहीं जोड़ी गई</span></b><span><span class="l-en">Drop a CSV of readings or a PDF report to start.</span><span class="l-hi" lang="hi">शुरू करने के लिए रीडिंग की CSV या PDF रिपोर्ट छोड़ें।</span></span></div>
+      <div class="panel csv-result" id="csv-result" hidden></div>
+      <div class="panel pdf-prev" id="pdf-prev" hidden></div>
+    </div>
+    <aside class="status-panel">
+      <h2><span class="l-en">CSV format</span><span class="l-hi" lang="hi">CSV का प्रारूप</span></h2>
+      <dl><div class="row"><dt><code>site</code></dt><dd><span class="l-en">required</span><span class="l-hi" lang="hi">ज़रूरी</span> · <span class="l-en">Ghat name</span><span class="l-hi" lang="hi">घाट का नाम</span></dd></div><div class="row"><dt><code>parameter</code></dt><dd><span class="l-en">required</span><span class="l-hi" lang="hi">ज़रूरी</span> · <span class="l-en">DO, BOD or pH</span><span class="l-hi" lang="hi">DO, BOD या pH</span></dd></div><div class="row"><dt><code>value</code></dt><dd><span class="l-en">required</span><span class="l-hi" lang="hi">ज़रूरी</span> · <span class="l-en">Number</span><span class="l-hi" lang="hi">संख्या</span></dd></div><div class="row"><dt><code>year</code></dt><dd><span class="l-en">optional</span><span class="l-hi" lang="hi">वैकल्पिक</span> · <span class="l-en">e.g. 2026</span><span class="l-hi" lang="hi">जैसे 2026</span></dd></div><div class="row"><dt><code>festival</code></dt><dd><span class="l-en">optional</span><span class="l-hi" lang="hi">वैकल्पिक</span> · <span class="l-en">Ganesh or Durga</span><span class="l-hi" lang="hi">Ganesh या Durga</span></dd></div><div class="row"><dt><code>phase</code></dt><dd><span class="l-en">optional</span><span class="l-hi" lang="hi">वैकल्पिक</span> · <span class="l-en">pre, during or after</span><span class="l-hi" lang="hi">pre, during या after</span></dd></div></dl>
+      <p class="small" style="color:var(--on-dark-muted);margin:12px 0 14px"><span class="l-en">The first row is the header. Names are not case sensitive. Ghat names are matched to the seven ghats in this report.</span><span class="l-hi" lang="hi">पहली पंक्ति शीर्षक है। नाम में बड़े-छोटे अक्षर का फ़र्क नहीं। घाट के नाम इस रिपोर्ट के सात घाटों से मिलाए जाते हैं।</span></p>
+      <button type="button" class="btn yellow" id="tpl"><span class="l-en">Download CSV template</span><span class="l-hi" lang="hi">CSV टेम्पलेट डाउनलोड करें</span></button>
+      <div style="height:16px"></div>
+    </aside>
+  </div>
+</div>
+</section>
+
 </main>
 <script type="application/json" id="brief-text">{"en": "Durga visarjan 2026: ghat water brief, Bhopal\n\nFor the BMC officer planning Durga visarjan, 20 October 2026. Generated by code from MPPCB visarjan reports 2023-2025.\n\nBasis\n7 ghats, Ganesh and Durga, tested before, during and a week after immersion, against CPCB Class B (outdoor bathing): DO at least 5 mg/l, BOD at most 3 mg/l, pH 6.5 to 8.5. A screening yardstick, not a legal finding. Score 0-100: how often and how far readings miss these limits. 2023-2025 history only; no 2026 results exist. Units are assumed (not printed).\n\nOverall\n• DO below 5 mg/l in 42 of 116 readings; 4 read 0, all at Bairagarh.\n• BOD above 3 mg/l in 100 of 112.\n• pH outside range in 6 of 115.\n• DO was already below 5 mg/l before immersion in 12 of 38 readings, so these figures alone do not show immersion as the cause.\n\nHighest scores\n1. Bairagarh (Upper Lake): score 47.5 (range 34.3-62.1), rank 1-2. DO low 11/13, BOD high 13/13. Lowest DO 0 mg/l (4 times, e.g. 2023 Ganesh after, 2023 report p.26).\n2. Malikhedi (Kund): score 34.7 (range 25.1-52.9), rank 1-6. DO low 9/13, BOD high 11/13. Lowest DO 0.6 mg/l (2025 Ganesh during, 2025 report p.29).\n3. Shahpura (Shahpura Lake): score 32.0, rank 2-3. DO low 5/18, BOD high 18/18. Lowest DO 2.5 mg/l (2025 Durga pre, 2025 report p.65).\n\nDurga-only order\n1 Bairagarh, 2 Shahpura, 3 Malikhedi, 4 Khatlapura, 5 Rani Kamlapati, 6 Hathaikheda, 7 Prempura.\n\nData gaps\n• 17 DO/BOD/pH readings unsampled (Bairagarh, Khatlapura, Malikhedi, Prempura); no Durga 2025 table for Bairagarh and Malikhedi. Never counted as clean.\n• Metals not scored (no Class B limit); total coliform not tested.\n• Rani Kamlapati / Kamla Park may be two places.\n• Weights are our judgment: across 6 weightings Bairagarh is first in 5 and Prempura last in 5; ranks 3-6 reorder.\n\nUse\nA guide for where to send extra cleaning, aeration and water testing. The decision is the officer's. No health effects are claimed.\n", "hi": "दुर्गा विसर्जन 2026: घाटों के पानी की जानकारी, भोपाल\n\nदुर्गा विसर्जन (20 अक्टूबर 2026) की योजना बनाने वाले BMC अधिकारी के लिए। MPPCB विसर्जन रिपोर्ट 2023-2025 से कोड द्वारा तैयार।\n\nआधार\n7 घाट, गणेश और दुर्गा, विसर्जन से पहले, दौरान और एक सप्ताह बाद की जाँच, CPCB क्लास B (बाहरी स्नान) से तुलना: DO कम से कम 5 mg/l, BOD अधिकतम 3 mg/l, pH 6.5 से 8.5। यह जाँच का पैमाना है, कानूनी निष्कर्ष नहीं। स्कोर (0-100): रीडिंग कितनी बार और कितनी दूर सीमा से बाहर रहीं। केवल 2023-2025 का इतिहास; 2026 के नतीजे नहीं हैं। इकाइयाँ मानी गई हैं (छपी नहीं)।\n\nकुल स्थिति\n• DO 5 mg/l से कम: 116 में से 42 रीडिंग; 4 बार 0, सभी बैरागढ़ में।\n• BOD 3 mg/l से अधिक: 112 में से 100।\n• pH सीमा से बाहर: 115 में से 6।\n• विसर्जन से पहले ही 38 में से 12 रीडिंग में DO 5 mg/l से कम था, इसलिए केवल इन आँकड़ों से विसर्जन को कारण नहीं माना जा सकता।\n\nसबसे अधिक स्कोर\n1. बैरागढ़ (संत हिरदाराम) कुंड (बड़ा तालाब): स्कोर 47.5 (दायरा 34.3-62.1), रैंक 1-2। DO कम 11/13, BOD अधिक 13/13। न्यूनतम DO 0 mg/l (4 बार, जैसे 2023 गणेश बाद, 2023 रिपोर्ट पृ. 26)।\n2. मालीखेड़ी कुंड (कुंड): स्कोर 34.7 (दायरा 25.1-52.9), रैंक 1-6। DO कम 9/13, BOD अधिक 11/13। न्यूनतम DO 0.6 mg/l (2025 गणेश दौरान, 2025 रिपोर्ट पृ. 29)।\n3. शाहपुरा झील घाट (शाहपुरा झील): स्कोर 32.0, रैंक 2-3। DO कम 5/18, BOD अधिक 18/18। न्यूनतम DO 2.5 mg/l (2025 दुर्गा पहले, 2025 रिपोर्ट पृ. 65)।\n\nकेवल दुर्गा विसर्जन का क्रम\n1 बैरागढ़, 2 शाहपुरा, 3 मालीखेड़ी, 4 खटलापुरा, 5 रानी कमलापति, 6 हथाईखेड़ा, 7 प्रेमपुरा।\n\nडेटा की कमियाँ\n• 17 DO/BOD/pH रीडिंग नहीं लीं (बैरागढ़, खटलापुरा, मालीखेड़ी, प्रेमपुरा); बैरागढ़ और मालीखेड़ी की दुर्गा 2025 तालिका नहीं है। इन्हें साफ़ नहीं माना गया।\n• धातुओं का स्कोर नहीं (क्लास B में सीमा नहीं); टोटल कोलीफॉर्म की जाँच नहीं।\n• रानी कमलापति घाट / कमला पार्क कुंड दो अलग जगहें हो सकती हैं।\n• वज़न हमारा निर्णय है: 6 तरह के वज़न में बैरागढ़ 5 बार पहले और प्रेमपुरा 5 बार आख़िरी स्थान पर; रैंक 3-6 का क्रम बदलता है।\n\nउपयोग\nअतिरिक्त सफ़ाई, एरेशन और पानी की जाँच कहाँ भेजें, यह तय करने में मदद के लिए। निर्णय अधिकारी का है। स्वास्थ्य पर असर का कोई दावा नहीं।\n"}</script>
 <script type="application/json" id="gw-data">{"limits":{"DO":{"kind":"min","low":5.0,"high":null,"text":"≥ 5","unit":"mg/l"},"BOD":{"kind":"max","low":null,"high":3.0,"text":"≤ 3","unit":"mg/l"},"pH":{"kind":"range","low":6.5,"high":8.5,"text":"6.5–8.5","unit":""}},"sites":[{"en":"Bairagarh","hi":"बैरागढ़"},{"en":"Malikhedi","hi":"मालीखेड़ी"},{"en":"Shahpura","hi":"शाहपुरा"},{"en":"Rani Kamlapati","hi":"रानी कमलापति"},{"en":"Khatlapura","hi":"खटलापुरा"},{"en":"Hathaikheda","hi":"हथाईखेड़ा"},{"en":"Prempura","hi":"प्रेमपुरा"}],"rows":[{"s":4,"y":2023,"f":"Ganesh","p":"pre","k":"pH","v":6.98,"b":0,"sev":0.0,"pg":26,"file":"Idol_immer._Report_23_CPCB.pdf","pr":""},{"s":4,"y":2023,"f":"Ganesh","p":"during","k":"pH","v":7.63,"b":0,"sev":0.0,"pg":26,"file":"Idol_immer._Report_23_CPCB.pdf","pr":""},{"s":4,"y":2023,"f":"Ganesh","p":"after","k":"pH","v":8.08,"b":0,"sev":0.0,"pg":26,"file":"Idol_immer._Report_23_CPCB.pdf","pr":""},{"s":4,"y":2023,"f":"Ganesh","p":"pre","k":"DO","v":6.4,"b":0,"sev":0.0,"pg":26,"file":"Idol_immer._Report_23_CPCB.pdf","pr":""},{"s":4,"y":2023,"f":"Ganesh","p":"during","k":"DO","v":6.1,"b":0,"sev":0.0,"pg":26,"file":"Idol_immer._Report_23_CPCB.pdf","pr":""},{"s":4,"y":2023,"f":"Ganesh","p":"after","k":"DO","v":7.8,"b":0,"sev":0.0,"pg":26,"file":"Idol_immer._Report_23_CPCB.pdf","pr":""},{"s":4,"y":2023,"f":"Ganesh","p":"pre","k":"BOD","v":2.4,"b":0,"sev":0.0,"pg":26,"file":"Idol_immer._Report_23_CPCB.pdf","pr":""},{"s":4,"y":2023,"f":"Ganesh","p":"during","k":"BOD","v":2.8,"b":0,"sev":0.0,"pg":26,"file":"Idol_immer._Report_23_CPCB.pdf","pr":""},{"s":4,"y":2023,"f":"Ganesh","p":"after","k":"BOD","v":11.2,"b":1,"sev":0.911,"pg":26,"file":"Idol_immer._Report_23_CPCB.pdf","pr":""},{"s":0,"y":2023,"f":"Ganesh","p":"pre","k":"pH","v":7.71,"b":0,"sev":0.0,"pg":26,"file":"Idol_immer._Report_23_CPCB.pdf","pr":""},{"s":0,"y":2023,"f":"Ganesh","p":"during","k":"pH","v":7.37,"b":0,"sev":0.0,"pg":26,"file":"Idol_immer._Report_23_CPCB.pdf","pr":""},{"s":0,"y":2023,"f":"Ganesh","p":"after","k":"pH","v":7.2,"b":0,"sev":0.0,"pg":26,"file":"Idol_immer._Report_23_CPCB.pdf","pr":""},{"s":0,"y":2023,"f":"Ganesh","p":"pre","k":"DO","v":5.6,"b":0,"sev":0.0,"pg":26,"file":"Idol_immer._Report_23_CPCB.pdf","pr":""},{"s":0,"y":2023,"f":"Ganesh","p":"during","k":"DO","v":4.5,"b":1,"sev":0.1,"pg":26,"file":"Idol_immer._Report_23_CPCB.pdf","pr":""},{"s":0,"y":2023,"f":"Ganesh","p":"after","k":"DO","v":0.0,"b":1,"sev":1.0,"pg":26,"file":"Idol_immer._Report_23_CPCB.pdf","pr":""},{"s":0,"y":2023,"f":"Ganesh","p":"pre","k":"BOD","v":3.8,"b":1,"sev":0.089,"pg":26,"file":"Idol_immer._Report_23_CPCB.pdf","pr":""},{"s":0,"y":2023,"f":"Ganesh","p":"during","k":"BOD","v":4.2,"b":1,"sev":0.133,"pg":26,"file":"Idol_immer._Report_23_CPCB.pdf","pr":""},{"s":0,"y":2023,"f":"Ganesh","p":"after","k":"BOD","v":10.0,"b":1,"sev":0.778,"pg":26,"file":"Idol_immer._Report_23_CPCB.pdf","pr":""},{"s":6,"y":2023,"f":"Ganesh","p":"pre","k":"pH","v":7.72,"b":0,"sev":0.0,"pg":26,"file":"Idol_immer._Report_23_CPCB.pdf","pr":""},{"s":6,"y":2023,"f":"Ganesh","p":"during","k":"pH","v":8.53,"b":1,"sev":0.02,"pg":26,"file":"Idol_immer._Report_23_CPCB.pdf","pr":""},{"s":6,"y":2023,"f":"Ganesh","p":"after","k":"pH","v":7.44,"b":0,"sev":0.0,"pg":26,"file":"Idol_immer._Report_23_CPCB.pdf","pr":""},{"s":6,"y":2023,"f":"Ganesh","p":"pre","k":"DO","v":6.2,"b":0,"sev":0.0,"pg":26,"file":"Idol_immer._Report_23_CPCB.pdf","pr":""},{"s":6,"y":2023,"f":"Ganesh","p":"during","k":"DO","v":6.7,"b":0,"sev":0.0,"pg":26,"file":"Idol_immer._Report_23_CPCB.pdf","pr":""},{"s":6,"y":2023,"f":"Ganesh","p":"after","k":"DO","v":6.5,"b":0,"sev":0.0,"pg":26,"file":"Idol_immer._Report_23_CPCB.pdf","pr":""},{"s":6,"y":2023,"f":"Ganesh","p":"pre","k":"BOD","v":1.3,"b":0,"sev":0.0,"pg":26,"file":"Idol_immer._Report_23_CPCB.pdf","pr":""},{"s":6,"y":2023,"f":"Ganesh","p":"during","k":"BOD","v":1.5,"b":0,"sev":0.0,"pg":26,"file":"Idol_immer._Report_23_CPCB.pdf","pr":""},{"s":6,"y":2023,"f":"Ganesh","p":"after","k":"BOD","v":2.0,"b":0,"sev":0.0,"pg":26,"file":"Idol_immer._Report_23_CPCB.pdf","pr":""},{"s":3,"y":2023,"f":"Ganesh","p":"pre","k":"pH","v":7.65,"b":0,"sev":0.0,"pg":27,"file":"Idol_immer._Report_23_CPCB.pdf","pr":""},{"s":3,"y":2023,"f":"Ganesh","p":"during","k":"pH","v":8.35,"b":0,"sev":0.0,"pg":27,"file":"Idol_immer._Report_23_CPCB.pdf","pr":""},{"s":3,"y":2023,"f":"Ganesh","p":"after","k":"pH","v":8.07,"b":0,"sev":0.0,"pg":27,"file":"Idol_immer._Report_23_CPCB.pdf","pr":""},{"s":3,"y":2023,"f":"Ganesh","p":"pre","k":"DO","v":6.6,"b":0,"sev":0.0,"pg":27,"file":"Idol_immer._Report_23_CPCB.pdf","pr":""},{"s":3,"y":2023,"f":"Ganesh","p":"during","k":"DO","v":5.8,"b":0,"sev":0.0,"pg":27,"file":"Idol_immer._Report_23_CPCB.pdf","pr":""},{"s":3,"y":2023,"f":"Ganesh","p":"after","k":"DO","v":9.5,"b":0,"sev":0.0,"pg":27,"file":"Idol_immer._Report_23_CPCB.pdf","pr":""},{"s":3,"y":2023,"f":"Ganesh","p":"pre","k":"BOD","v":4.2,"b":1,"sev":0.133,"pg":27,"file":"Idol_immer._Report_23_CPCB.pdf","pr":""},{"s":3,"y":2023,"f":"Ganesh","p":"during","k":"BOD","v":4.4,"b":1,"sev":0.156,"pg":27,"file":"Idol_immer._Report_23_CPCB.pdf","pr":""},{"s":3,"y":2023,"f":"Ganesh","p":"after","k":"BOD","v":9.2,"b":1,"sev":0.689,"pg":27,"file":"Idol_immer._Report_23_CPCB.pdf","pr":""},{"s":5,"y":2023,"f":"Ganesh","p":"pre","k":"pH","v":8.1,"b":0,"sev":0.0,"pg":27,"file":"Idol_immer._Report_23_CPCB.pdf","pr":""},{"s":5,"y":2023,"f":"Ganesh","p":"during","k":"pH","v":8.92,"b":1,"sev":0.28,"pg":27,"file":"Idol_immer._Report_23_CPCB.pdf","pr":""},{"s":5,"y":2023,"f":"Ganesh","p":"after","k":"pH","v":8.01,"b":0,"sev":0.0,"pg":27,"file":"Idol_immer._Report_23_CPCB.pdf","pr":""},{"s":5,"y":2023,"f":"Ganesh","p":"pre","k":"DO","v":7.9,"b":0,"sev":0.0,"pg":27,"file":"Idol_immer._Report_23_CPCB.pdf","pr":""},{"s":5,"y":2023,"f":"Ganesh","p":"during","k":"DO","v":6.5,"b":0,"sev":0.0,"pg":27,"file":"Idol_immer._Report_23_CPCB.pdf","pr":""},{"s":5,"y":2023,"f":"Ganesh","p":"after","k":"DO","v":5.1,"b":0,"sev":0.0,"pg":27,"file":"Idol_immer._Report_23_CPCB.pdf","pr":""},{"s":5,"y":2023,"f":"Ganesh","p":"pre","k":"BOD","v":2.5,"b":0,"sev":0.0,"pg":27,"file":"Idol_immer._Report_23_CPCB.pdf","pr":""},{"s":5,"y":2023,"f":"Ganesh","p":"during","k":"BOD","v":6.0,"b":1,"sev":0.333,"pg":27,"file":"Idol_immer._Report_23_CPCB.pdf","pr":""},{"s":5,"y":2023,"f":"Ganesh","p":"after","k":"BOD","v":10.8,"b":1,"sev":0.867,"pg":27,"file":"Idol_immer._Report_23_CPCB.pdf","pr":""},{"s":1,"y":2023,"f":"Ganesh","p":"pre","k":"pH","v":7.65,"b":0,"sev":0.0,"pg":27,"file":"Idol_immer._Report_23_CPCB.pdf","pr":""},{"s":1,"y":2023,"f":"Ganesh","p":"during","k":"pH","v":7.81,"b":0,"sev":0.0,"pg":27,"file":"Idol_immer._Report_23_CPCB.pdf","pr":""},{"s":1,"y":2023,"f":"Ganesh","p":"after","k":"pH","v":7.11,"b":0,"sev":0.0,"pg":27,"file":"Idol_immer._Report_23_CPCB.pdf","pr":""},{"s":1,"y":2023,"f":"Ganesh","p":"pre","k":"DO","v":7.5,"b":0,"sev":0.0,"pg":27,"file":"Idol_immer._Report_23_CPCB.pdf","pr":""},{"s":1,"y":2023,"f":"Ganesh","p":"during","k":"DO","v":7.0,"b":0,"sev":0.0,"pg":27,"file":"Idol_immer._Report_23_CPCB.pdf","pr":""},{"s":1,"y":2023,"f":"Ganesh","p":"after","k":"DO","v":3.2,"b":1,"sev":0.36,"pg":27,"file":"Idol_immer._Report_23_CPCB.pdf","pr":""},{"s":1,"y":2023,"f":"Ganesh","p":"pre","k":"BOD","v":1.6,"b":0,"sev":0.0,"pg":27,"file":"Idol_immer._Report_23_CPCB.pdf","pr":""},{"s":1,"y":2023,"f":"Ganesh","p":"during","k":"BOD","v":1.8,"b":0,"sev":0.0,"pg":27,"file":"Idol_immer._Report_23_CPCB.pdf","pr":""},{"s":1,"y":2023,"f":"Ganesh","p":"after","k":"BOD","v":16.8,"b":1,"sev":1.0,"pg":27,"file":"Idol_immer._Report_23_CPCB.pdf","pr":""},{"s":2,"y":2023,"f":"Ganesh","p":"pre","k":"pH","v":7.32,"b":0,"sev":0.0,"pg":28,"file":"Idol_immer._Report_23_CPCB.pdf","pr":""},{"s":2,"y":2023,"f":"Ganesh","p":"during","k":"pH","v":7.36,"b":0,"sev":0.0,"pg":28,"file":"Idol_immer._Report_23_CPCB.pdf","pr":""},{"s":2,"y":2023,"f":"Ganesh","p":"after","k":"pH","v":7.76,"b":0,"sev":0.0,"pg":28,"file":"Idol_immer._Report_23_CPCB.pdf","pr":""},{"s":2,"y":2023,"f":"Ganesh","p":"pre","k":"DO","v":5.9,"b":0,"sev":0.0,"pg":28,"file":"Idol_immer._Report_23_CPCB.pdf","pr":""},{"s":2,"y":2023,"f":"Ganesh","p":"during","k":"DO","v":5.2,"b":0,"sev":0.0,"pg":28,"file":"Idol_immer._Report_23_CPCB.pdf","pr":""},{"s":2,"y":2023,"f":"Ganesh","p":"after","k":"DO","v":5.0,"b":0,"sev":0.0,"pg":28,"file":"Idol_immer._Report_23_CPCB.pdf","pr":""},{"s":2,"y":2023,"f":"Ganesh","p":"pre","k":"BOD","v":6.4,"b":1,"sev":0.378,"pg":28,"file":"Idol_immer._Report_23_CPCB.pdf","pr":""},{"s":2,"y":2023,"f":"Ganesh","p":"during","k":"BOD","v":8.4,"b":1,"sev":0.6,"pg":28,"file":"Idol_immer._Report_23_CPCB.pdf","pr":""},{"s":2,"y":2023,"f":"Ganesh","p":"after","k":"BOD","v":10.4,"b":1,"sev":0.822,"pg":28,"file":"Idol_immer._Report_23_CPCB.pdf","pr":""},{"s":5,"y":2023,"f":"Durga","p":"pre","k":"pH","v":8.02,"b":0,"sev":0.0,"pg":59,"file":"Idol_immer._Report_23_CPCB.pdf","pr":""},{"s":5,"y":2023,"f":"Durga","p":"during","k":"pH","v":8.02,"b":0,"sev":0.0,"pg":59,"file":"Idol_immer._Report_23_CPCB.pdf","pr":""},{"s":5,"y":2023,"f":"Durga","p":"after","k":"pH","v":8.15,"b":0,"sev":0.0,"pg":59,"file":"Idol_immer._Report_23_CPCB.pdf","pr":""},{"s":5,"y":2023,"f":"Durga","p":"pre","k":"DO","v":6.5,"b":0,"sev":0.0,"pg":59,"file":"Idol_immer._Report_23_CPCB.pdf","pr":""},{"s":5,"y":2023,"f":"Durga","p":"during","k":"DO","v":10.2,"b":0,"sev":0.0,"pg":59,"file":"Idol_immer._Report_23_CPCB.pdf","pr":""},{"s":5,"y":2023,"f":"Durga","p":"after","k":"DO","v":8.6,"b":0,"sev":0.0,"pg":59,"file":"Idol_immer._Report_23_CPCB.pdf","pr":""},{"s":5,"y":2023,"f":"Durga","p":"pre","k":"BOD","v":4.0,"b":1,"sev":0.111,"pg":59,"file":"Idol_immer._Report_23_CPCB.pdf","pr":""},{"s":5,"y":2023,"f":"Durga","p":"during","k":"BOD","v":8.8,"b":1,"sev":0.644,"pg":59,"file":"Idol_immer._Report_23_CPCB.pdf","pr":""},{"s":5,"y":2023,"f":"Durga","p":"after","k":"BOD","v":2.4,"b":0,"sev":0.0,"pg":59,"file":"Idol_immer._Report_23_CPCB.pdf","pr":""},{"s":3,"y":2023,"f":"Durga","p":"pre","k":"pH","v":8.07,"b":0,"sev":0.0,"pg":59,"file":"Idol_immer._Report_23_CPCB.pdf","pr":""},{"s":3,"y":2023,"f":"Durga","p":"during","k":"pH","v":7.63,"b":0,"sev":0.0,"pg":59,"file":"Idol_immer._Report_23_CPCB.pdf","pr":""},{"s":3,"y":2023,"f":"Durga","p":"after","k":"pH","v":7.54,"b":0,"sev":0.0,"pg":59,"file":"Idol_immer._Report_23_CPCB.pdf","pr":""},{"s":3,"y":2023,"f":"Durga","p":"pre","k":"DO","v":6.2,"b":0,"sev":0.0,"pg":59,"file":"Idol_immer._Report_23_CPCB.pdf","pr":""},{"s":3,"y":2023,"f":"Durga","p":"during","k":"DO","v":6.0,"b":0,"sev":0.0,"pg":59,"file":"Idol_immer._Report_23_CPCB.pdf","pr":""},{"s":3,"y":2023,"f":"Durga","p":"after","k":"DO","v":6.5,"b":0,"sev":0.0,"pg":59,"file":"Idol_immer._Report_23_CPCB.pdf","pr":""},{"s":3,"y":2023,"f":"Durga","p":"pre","k":"BOD","v":8.8,"b":1,"sev":0.644,"pg":59,"file":"Idol_immer._Report_23_CPCB.pdf","pr":""},{"s":3,"y":2023,"f":"Durga","p":"during","k":"BOD","v":8.4,"b":1,"sev":0.6,"pg":59,"file":"Idol_immer._Report_23_CPCB.pdf","pr":""},{"s":3,"y":2023,"f":"Durga","p":"after","k":"BOD","v":8.6,"b":1,"sev":0.622,"pg":59,"file":"Idol_immer._Report_23_CPCB.pdf","pr":""},{"s":4,"y":2023,"f":"Durga","p":"pre","k":"pH","v":7.87,"b":0,"sev":0.0,"pg":59,"file":"Idol_immer._Report_23_CPCB.pdf","pr":""},{"s":4,"y":2023,"f":"Durga","p":"during","k":"pH","v":8.2,"b":0,"sev":0.0,"pg":59,"file":"Idol_immer._Report_23_CPCB.pdf","pr":""},{"s":4,"y":2023,"f":"Durga","p":"after","k":"pH","v":7.46,"b":0,"sev":0.0,"pg":59,"file":"Idol_immer._Report_23_CPCB.pdf","pr":""},{"s":4,"y":2023,"f":"Durga","p":"pre","k":"DO","v":4.5,"b":1,"sev":0.1,"pg":59,"file":"Idol_immer._Report_23_CPCB.pdf","pr":""},{"s":4,"y":2023,"f":"Durga","p":"during","k":"DO","v":4.2,"b":1,"sev":0.16,"pg":59,"file":"Idol_immer._Report_23_CPCB.pdf","pr":""},{"s":4,"y":2023,"f":"Durga","p":"after","k":"DO","v":4.4,"b":1,"sev":0.12,"pg":59,"file":"Idol_immer._Report_23_CPCB.pdf","pr":""},{"s":4,"y":2023,"f":"Durga","p":"pre","k":"BOD","v":6.4,"b":1,"sev":0.378,"pg":59,"file":"Idol_immer._Report_23_CPCB.pdf","pr":""},{"s":4,"y":2023,"f":"Durga","p":"during","k":"BOD","v":null,"b":0,"sev":0,"pg":59,"file":"Idol_immer._Report_23_CPCB.pdf","pr":"_"},{"s":4,"y":2023,"f":"Durga","p":"after","k":"BOD","v":7.8,"b":1,"sev":0.533,"pg":59,"file":"Idol_immer._Report_23_CPCB.pdf","pr":""},{"s":0,"y":2023,"f":"Durga","p":"pre","k":"pH","v":7.32,"b":0,"sev":0.0,"pg":60,"file":"Idol_immer._Report_23_CPCB.pdf","pr":""},{"s":0,"y":2023,"f":"Durga","p":"during","k":"pH","v":7.55,"b":0,"sev":0.0,"pg":60,"file":"Idol_immer._Report_23_CPCB.pdf","pr":""},{"s":0,"y":2023,"f":"Durga","p":"after","k":"pH","v":7.81,"b":0,"sev":0.0,"pg":60,"file":"Idol_immer._Report_23_CPCB.pdf","pr":""},{"s":0,"y":2023,"f":"Durga","p":"pre","k":"DO","v":0.0,"b":1,"sev":1.0,"pg":60,"file":"Idol_immer._Report_23_CPCB.pdf","pr":""},{"s":0,"y":2023,"f":"Durga","p":"during","k":"DO","v":0.0,"b":1,"sev":1.0,"pg":60,"file":"Idol_immer._Report_23_CPCB.pdf","pr":""},{"s":0,"y":2023,"f":"Durga","p":"after","k":"DO","v":4.2,"b":1,"sev":0.16,"pg":60,"file":"Idol_immer._Report_23_CPCB.pdf","pr":""},{"s":0,"y":2023,"f":"Durga","p":"pre","k":"BOD","v":9.2,"b":1,"sev":0.689,"pg":60,"file":"Idol_immer._Report_23_CPCB.pdf","pr":""},{"s":0,"y":2023,"f":"Durga","p":"during","k":"BOD","v":9.0,"b":1,"sev":0.667,"pg":60,"file":"Idol_immer._Report_23_CPCB.pdf","pr":""},{"s":0,"y":2023,"f":"Durga","p":"after","k":"BOD","v":9.4,"b":1,"sev":0.711,"pg":60,"file":"Idol_immer._Report_23_CPCB.pdf","pr":""},{"s":6,"y":2023,"f":"Durga","p":"pre","k":"pH","v":7.66,"b":0,"sev":0.0,"pg":60,"file":"Idol_immer._Report_23_CPCB.pdf","pr":""},{"s":6,"y":2023,"f":"Durga","p":"during","k":"pH","v":null,"b":0,"sev":0,"pg":60,"file":"Idol_immer._Report_23_CPCB.pdf","pr":"_"},{"s":6,"y":2023,"f":"Durga","p":"after","k":"pH","v":7.39,"b":0,"sev":0.0,"pg":60,"file":"Idol_immer._Report_23_CPCB.pdf","pr":""},{"s":6,"y":2023,"f":"Durga","p":"pre","k":"DO","v":5.4,"b":0,"sev":0.0,"pg":60,"file":"Idol_immer._Report_23_CPCB.pdf","pr":""},{"s":6,"y":2023,"f":"Durga","p":"during","k":"DO","v":5.0,"b":0,"sev":0.0,"pg":60,"file":"Idol_immer._Report_23_CPCB.pdf","pr":""},{"s":6,"y":2023,"f":"Durga","p":"after","k":"DO","v":5.7,"b":0,"sev":0.0,"pg":60,"file":"Idol_immer._Report_23_CPCB.pdf","pr":""},{"s":6,"y":2023,"f":"Durga","p":"pre","k":"BOD","v":null,"b":0,"sev":0,"pg":60,"file":"Idol_immer._Report_23_CPCB.pdf","pr":"_"},{"s":6,"y":2023,"f":"Durga","p":"during","k":"BOD","v":null,"b":0,"sev":0,"pg":60,"file":"Idol_immer._Report_23_CPCB.pdf","pr":"_"},{"s":6,"y":2023,"f":"Durga","p":"after","k":"BOD","v":null,"b":0,"sev":0,"pg":60,"file":"Idol_immer._Report_23_CPCB.pdf","pr":"_"},{"s":2,"y":2023,"f":"Durga","p":"pre","k":"pH","v":7.35,"b":0,"sev":0.0,"pg":60,"file":"Idol_immer._Report_23_CPCB.pdf","pr":""},{"s":2,"y":2023,"f":"Durga","p":"during","k":"pH","v":7.73,"b":0,"sev":0.0,"pg":60,"file":"Idol_immer._Report_23_CPCB.pdf","pr":""},{"s":2,"y":2023,"f":"Durga","p":"after","k":"pH","v":7.76,"b":0,"sev":0.0,"pg":60,"file":"Idol_immer._Report_23_CPCB.pdf","pr":""},{"s":2,"y":2023,"f":"Durga","p":"pre","k":"DO","v":4.5,"b":1,"sev":0.1,"pg":60,"file":"Idol_immer._Report_23_CPCB.pdf","pr":""},{"s":2,"y":2023,"f":"Durga","p":"during","k":"DO","v":4.0,"b":1,"sev":0.2,"pg":60,"file":"Idol_immer._Report_23_CPCB.pdf","pr":""},{"s":2,"y":2023,"f":"Durga","p":"after","k":"DO","v":5.0,"b":0,"sev":0.0,"pg":60,"file":"Idol_immer._Report_23_CPCB.pdf","pr":""},{"s":2,"y":2023,"f":"Durga","p":"pre","k":"BOD","v":6.4,"b":1,"sev":0.378,"pg":60,"file":"Idol_immer._Report_23_CPCB.pdf","pr":""},{"s":2,"y":2023,"f":"Durga","p":"during","k":"BOD","v":6.8,"b":1,"sev":0.422,"pg":60,"file":"Idol_immer._Report_23_CPCB.pdf","pr":""},{"s":2,"y":2023,"f":"Durga","p":"after","k":"BOD","v":7.8,"b":1,"sev":0.533,"pg":60,"file":"Idol_immer._Report_23_CPCB.pdf","pr":""},{"s":1,"y":2023,"f":"Durga","p":"pre","k":"pH","v":7.57,"b":0,"sev":0.0,"pg":61,"file":"Idol_immer._Report_23_CPCB.pdf","pr":""},{"s":1,"y":2023,"f":"Durga","p":"during","k":"pH","v":7.37,"b":0,"sev":0.0,"pg":61,"file":"Idol_immer._Report_23_CPCB.pdf","pr":""},{"s":1,"y":2023,"f":"Durga","p":"after","k":"pH","v":7.81,"b":0,"sev":0.0,"pg":61,"file":"Idol_immer._Report_23_CPCB.pdf","pr":""},{"s":1,"y":2023,"f":"Durga","p":"pre","k":"DO","v":4.6,"b":1,"sev":0.08,"pg":61,"file":"Idol_immer._Report_23_CPCB.pdf","pr":""},{"s":1,"y":2023,"f":"Durga","p":"during","k":"DO","v":4.3,"b":1,"sev":0.14,"pg":61,"file":"Idol_immer._Report_23_CPCB.pdf","pr":""},{"s":1,"y":2023,"f":"Durga","p":"after","k":"DO","v":10.4,"b":0,"sev":0.0,"pg":61,"file":"Idol_immer._Report_23_CPCB.pdf","pr":""},{"s":1,"y":2023,"f":"Durga","p":"pre","k":"BOD","v":6.8,"b":1,"sev":0.422,"pg":61,"file":"Idol_immer._Report_23_CPCB.pdf","pr":""},{"s":1,"y":2023,"f":"Durga","p":"during","k":"BOD","v":6.8,"b":1,"sev":0.422,"pg":61,"file":"Idol_immer._Report_23_CPCB.pdf","pr":""},{"s":1,"y":2023,"f":"Durga","p":"after","k":"BOD","v":6.6,"b":1,"sev":0.4,"pg":61,"file":"Idol_immer._Report_23_CPCB.pdf","pr":""},{"s":5,"y":2024,"f":"Durga","p":"pre","k":"pH","v":9.2,"b":1,"sev":0.467,"pg":23,"file":"Ganesh_and_Durga_visarjan_report-2024.pdf","pr":""},{"s":5,"y":2024,"f":"Durga","p":"during","k":"pH","v":7.7,"b":0,"sev":0.0,"pg":23,"file":"Ganesh_and_Durga_visarjan_report-2024.pdf","pr":""},{"s":5,"y":2024,"f":"Durga","p":"after","k":"pH","v":7.7,"b":0,"sev":0.0,"pg":23,"file":"Ganesh_and_Durga_visarjan_report-2024.pdf","pr":""},{"s":5,"y":2024,"f":"Durga","p":"pre","k":"DO","v":8.6,"b":0,"sev":0.0,"pg":23,"file":"Ganesh_and_Durga_visarjan_report-2024.pdf","pr":""},{"s":5,"y":2024,"f":"Durga","p":"during","k":"DO","v":5.9,"b":0,"sev":0.0,"pg":23,"file":"Ganesh_and_Durga_visarjan_report-2024.pdf","pr":""},{"s":5,"y":2024,"f":"Durga","p":"after","k":"DO","v":5.7,"b":0,"sev":0.0,"pg":23,"file":"Ganesh_and_Durga_visarjan_report-2024.pdf","pr":""},{"s":5,"y":2024,"f":"Durga","p":"pre","k":"BOD","v":7.4,"b":1,"sev":0.489,"pg":23,"file":"Ganesh_and_Durga_visarjan_report-2024.pdf","pr":""},{"s":5,"y":2024,"f":"Durga","p":"during","k":"BOD","v":4.4,"b":1,"sev":0.156,"pg":23,"file":"Ganesh_and_Durga_visarjan_report-2024.pdf","pr":""},{"s":5,"y":2024,"f":"Durga","p":"after","k":"BOD","v":4.6,"b":1,"sev":0.178,"pg":23,"file":"Ganesh_and_Durga_visarjan_report-2024.pdf","pr":""},{"s":3,"y":2024,"f":"Durga","p":"pre","k":"pH","v":7.48,"b":0,"sev":0.0,"pg":24,"file":"Ganesh_and_Durga_visarjan_report-2024.pdf","pr":""},{"s":3,"y":2024,"f":"Durga","p":"during","k":"pH","v":7.7,"b":0,"sev":0.0,"pg":24,"file":"Ganesh_and_Durga_visarjan_report-2024.pdf","pr":""},{"s":3,"y":2024,"f":"Durga","p":"after","k":"pH","v":7.75,"b":0,"sev":0.0,"pg":24,"file":"Ganesh_and_Durga_visarjan_report-2024.pdf","pr":""},{"s":3,"y":2024,"f":"Durga","p":"pre","k":"DO","v":7.5,"b":0,"sev":0.0,"pg":24,"file":"Ganesh_and_Durga_visarjan_report-2024.pdf","pr":""},{"s":3,"y":2024,"f":"Durga","p":"during","k":"DO","v":6.4,"b":0,"sev":0.0,"pg":24,"file":"Ganesh_and_Durga_visarjan_report-2024.pdf","pr":""},{"s":3,"y":2024,"f":"Durga","p":"after","k":"DO","v":6.5,"b":0,"sev":0.0,"pg":24,"file":"Ganesh_and_Durga_visarjan_report-2024.pdf","pr":""},{"s":3,"y":2024,"f":"Durga","p":"pre","k":"BOD","v":5.6,"b":1,"sev":0.289,"pg":24,"file":"Ganesh_and_Durga_visarjan_report-2024.pdf","pr":""},{"s":3,"y":2024,"f":"Durga","p":"during","k":"BOD","v":5.8,"b":1,"sev":0.311,"pg":24,"file":"Ganesh_and_Durga_visarjan_report-2024.pdf","pr":""},{"s":3,"y":2024,"f":"Durga","p":"after","k":"BOD","v":6.0,"b":1,"sev":0.333,"pg":24,"file":"Ganesh_and_Durga_visarjan_report-2024.pdf","pr":""},{"s":4,"y":2024,"f":"Durga","p":"pre","k":"pH","v":8.0,"b":0,"sev":0.0,"pg":24,"file":"Ganesh_and_Durga_visarjan_report-2024.pdf","pr":""},{"s":4,"y":2024,"f":"Durga","p":"during","k":"pH","v":7.57,"b":0,"sev":0.0,"pg":24,"file":"Ganesh_and_Durga_visarjan_report-2024.pdf","pr":""},{"s":4,"y":2024,"f":"Durga","p":"after","k":"pH","v":7.4,"b":0,"sev":0.0,"pg":24,"file":"Ganesh_and_Durga_visarjan_report-2024.pdf","pr":""},{"s":4,"y":2024,"f":"Durga","p":"pre","k":"DO","v":6.6,"b":0,"sev":0.0,"pg":24,"file":"Ganesh_and_Durga_visarjan_report-2024.pdf","pr":""},{"s":4,"y":2024,"f":"Durga","p":"during","k":"DO","v":4.5,"b":1,"sev":0.1,"pg":24,"file":"Ganesh_and_Durga_visarjan_report-2024.pdf","pr":""},{"s":4,"y":2024,"f":"Durga","p":"after","k":"DO","v":4.4,"b":1,"sev":0.12,"pg":24,"file":"Ganesh_and_Durga_visarjan_report-2024.pdf","pr":""},{"s":4,"y":2024,"f":"Durga","p":"pre","k":"BOD","v":7.8,"b":1,"sev":0.533,"pg":24,"file":"Ganesh_and_Durga_visarjan_report-2024.pdf","pr":""},{"s":4,"y":2024,"f":"Durga","p":"during","k":"BOD","v":8.0,"b":1,"sev":0.556,"pg":24,"file":"Ganesh_and_Durga_visarjan_report-2024.pdf","pr":""},{"s":4,"y":2024,"f":"Durga","p":"after","k":"BOD","v":8.4,"b":1,"sev":0.6,"pg":24,"file":"Ganesh_and_Durga_visarjan_report-2024.pdf","pr":""},{"s":0,"y":2024,"f":"Durga","p":"pre","k":"pH","v":7.03,"b":0,"sev":0.0,"pg":25,"file":"Ganesh_and_Durga_visarjan_report-2024.pdf","pr":""},{"s":0,"y":2024,"f":"Durga","p":"during","k":"pH","v":6.87,"b":0,"sev":0.0,"pg":25,"file":"Ganesh_and_Durga_visarjan_report-2024.pdf","pr":""},{"s":0,"y":2024,"f":"Durga","p":"after","k":"pH","v":7.24,"b":0,"sev":0.0,"pg":25,"file":"Ganesh_and_Durga_visarjan_report-2024.pdf","pr":""},{"s":0,"y":2024,"f":"Durga","p":"pre","k":"DO","v":4.2,"b":1,"sev":0.16,"pg":25,"file":"Ganesh_and_Durga_visarjan_report-2024.pdf","pr":""},{"s":0,"y":2024,"f":"Durga","p":"during","k":"DO","v":2.2,"b":1,"sev":0.56,"pg":25,"file":"Ganesh_and_Durga_visarjan_report-2024.pdf","pr":""},{"s":0,"y":2024,"f":"Durga","p":"after","k":"DO","v":2.4,"b":1,"sev":0.52,"pg":25,"file":"Ganesh_and_Durga_visarjan_report-2024.pdf","pr":""},{"s":0,"y":2024,"f":"Durga","p":"pre","k":"BOD","v":6.0,"b":1,"sev":0.333,"pg":25,"file":"Ganesh_and_Durga_visarjan_report-2024.pdf","pr":""},{"s":0,"y":2024,"f":"Durga","p":"during","k":"BOD","v":8.0,"b":1,"sev":0.556,"pg":25,"file":"Ganesh_and_Durga_visarjan_report-2024.pdf","pr":""},{"s":0,"y":2024,"f":"Durga","p":"after","k":"BOD","v":8.2,"b":1,"sev":0.578,"pg":25,"file":"Ganesh_and_Durga_visarjan_report-2024.pdf","pr":""},{"s":6,"y":2024,"f":"Durga","p":"pre","k":"pH","v":8.22,"b":0,"sev":0.0,"pg":25,"file":"Ganesh_and_Durga_visarjan_report-2024.pdf","pr":""},{"s":6,"y":2024,"f":"Durga","p":"during","k":"pH","v":8.02,"b":0,"sev":0.0,"pg":25,"file":"Ganesh_and_Durga_visarjan_report-2024.pdf","pr":""},{"s":6,"y":2024,"f":"Durga","p":"after","k":"pH","v":8.11,"b":0,"sev":0.0,"pg":25,"file":"Ganesh_and_Durga_visarjan_report-2024.pdf","pr":""},{"s":6,"y":2024,"f":"Durga","p":"pre","k":"DO","v":7.6,"b":0,"sev":0.0,"pg":25,"file":"Ganesh_and_Durga_visarjan_report-2024.pdf","pr":""},{"s":6,"y":2024,"f":"Durga","p":"during","k":"DO","v":6.4,"b":0,"sev":0.0,"pg":25,"file":"Ganesh_and_Durga_visarjan_report-2024.pdf","pr":""},{"s":6,"y":2024,"f":"Durga","p":"after","k":"DO","v":7.6,"b":0,"sev":0.0,"pg":25,"file":"Ganesh_and_Durga_visarjan_report-2024.pdf","pr":""},{"s":6,"y":2024,"f":"Durga","p":"pre","k":"BOD","v":2.4,"b":0,"sev":0.0,"pg":25,"file":"Ganesh_and_Durga_visarjan_report-2024.pdf","pr":""},{"s":6,"y":2024,"f":"Durga","p":"during","k":"BOD","v":2.6,"b":0,"sev":0.0,"pg":25,"file":"Ganesh_and_Durga_visarjan_report-2024.pdf","pr":""},{"s":6,"y":2024,"f":"Durga","p":"after","k":"BOD","v":3.4,"b":1,"sev":0.044,"pg":25,"file":"Ganesh_and_Durga_visarjan_report-2024.pdf","pr":""},{"s":2,"y":2024,"f":"Durga","p":"pre","k":"pH","v":7.36,"b":0,"sev":0.0,"pg":26,"file":"Ganesh_and_Durga_visarjan_report-2024.pdf","pr":""},{"s":2,"y":2024,"f":"Durga","p":"during","k":"pH","v":7.35,"b":0,"sev":0.0,"pg":26,"file":"Ganesh_and_Durga_visarjan_report-2024.pdf","pr":""},{"s":2,"y":2024,"f":"Durga","p":"after","k":"pH","v":7.53,"b":0,"sev":0.0,"pg":26,"file":"Ganesh_and_Durga_visarjan_report-2024.pdf","pr":""},{"s":2,"y":2024,"f":"Durga","p":"pre","k":"DO","v":6.8,"b":0,"sev":0.0,"pg":26,"file":"Ganesh_and_Durga_visarjan_report-2024.pdf","pr":""},{"s":2,"y":2024,"f":"Durga","p":"during","k":"DO","v":5.4,"b":0,"sev":0.0,"pg":26,"file":"Ganesh_and_Durga_visarjan_report-2024.pdf","pr":""},{"s":2,"y":2024,"f":"Durga","p":"after","k":"DO","v":3.8,"b":1,"sev":0.24,"pg":26,"file":"Ganesh_and_Durga_visarjan_report-2024.pdf","pr":""},{"s":2,"y":2024,"f":"Durga","p":"pre","k":"BOD","v":10.8,"b":1,"sev":0.867,"pg":26,"file":"Ganesh_and_Durga_visarjan_report-2024.pdf","pr":""},{"s":2,"y":2024,"f":"Durga","p":"during","k":"BOD","v":11.2,"b":1,"sev":0.911,"pg":26,"file":"Ganesh_and_Durga_visarjan_report-2024.pdf","pr":""},{"s":2,"y":2024,"f":"Durga","p":"after","k":"BOD","v":11.6,"b":1,"sev":0.956,"pg":26,"file":"Ganesh_and_Durga_visarjan_report-2024.pdf","pr":""},{"s":1,"y":2024,"f":"Durga","p":"pre","k":"pH","v":7.29,"b":0,"sev":0.0,"pg":26,"file":"Ganesh_and_Durga_visarjan_report-2024.pdf","pr":""},{"s":1,"y":2024,"f":"Durga","p":"during","k":"pH","v":7.3,"b":0,"sev":0.0,"pg":26,"file":"Ganesh_and_Durga_visarjan_report-2024.pdf","pr":""},{"s":1,"y":2024,"f":"Durga","p":"after","k":"pH","v":7.01,"b":0,"sev":0.0,"pg":26,"file":"Ganesh_and_Durga_visarjan_report-2024.pdf","pr":""},{"s":1,"y":2024,"f":"Durga","p":"pre","k":"DO","v":4.5,"b":1,"sev":0.1,"pg":26,"file":"Ganesh_and_Durga_visarjan_report-2024.pdf","pr":""},{"s":1,"y":2024,"f":"Durga","p":"during","k":"DO","v":4.1,"b":1,"sev":0.18,"pg":26,"file":"Ganesh_and_Durga_visarjan_report-2024.pdf","pr":""},{"s":1,"y":2024,"f":"Durga","p":"after","k":"DO","v":4.0,"b":1,"sev":0.2,"pg":26,"file":"Ganesh_and_Durga_visarjan_report-2024.pdf","pr":""},{"s":1,"y":2024,"f":"Durga","p":"pre","k":"BOD","v":6.8,"b":1,"sev":0.422,"pg":26,"file":"Ganesh_and_Durga_visarjan_report-2024.pdf","pr":""},{"s":1,"y":2024,"f":"Durga","p":"during","k":"BOD","v":5.0,"b":1,"sev":0.222,"pg":26,"file":"Ganesh_and_Durga_visarjan_report-2024.pdf","pr":""},{"s":1,"y":2024,"f":"Durga","p":"after","k":"BOD","v":5.2,"b":1,"sev":0.244,"pg":26,"file":"Ganesh_and_Durga_visarjan_report-2024.pdf","pr":""},{"s":4,"y":2024,"f":"Ganesh","p":"pre","k":"pH","v":8.07,"b":0,"sev":0.0,"pg":69,"file":"Ganesh_and_Durga_visarjan_report-2024.pdf","pr":""},{"s":4,"y":2024,"f":"Ganesh","p":"during","k":"pH","v":6.49,"b":1,"sev":0.007,"pg":69,"file":"Ganesh_and_Durga_visarjan_report-2024.pdf","pr":""},{"s":4,"y":2024,"f":"Ganesh","p":"after","k":"pH","v":7.95,"b":0,"sev":0.0,"pg":69,"file":"Ganesh_and_Durga_visarjan_report-2024.pdf","pr":""},{"s":4,"y":2024,"f":"Ganesh","p":"pre","k":"DO","v":4.3,"b":1,"sev":0.14,"pg":69,"file":"Ganesh_and_Durga_visarjan_report-2024.pdf","pr":""},{"s":4,"y":2024,"f":"Ganesh","p":"during","k":"DO","v":4.0,"b":1,"sev":0.2,"pg":69,"file":"Ganesh_and_Durga_visarjan_report-2024.pdf","pr":""},{"s":4,"y":2024,"f":"Ganesh","p":"after","k":"DO","v":4.6,"b":1,"sev":0.08,"pg":69,"file":"Ganesh_and_Durga_visarjan_report-2024.pdf","pr":""},{"s":4,"y":2024,"f":"Ganesh","p":"pre","k":"BOD","v":6.8,"b":1,"sev":0.422,"pg":69,"file":"Ganesh_and_Durga_visarjan_report-2024.pdf","pr":""},{"s":4,"y":2024,"f":"Ganesh","p":"during","k":"BOD","v":7.2,"b":1,"sev":0.467,"pg":69,"file":"Ganesh_and_Durga_visarjan_report-2024.pdf","pr":""},{"s":4,"y":2024,"f":"Ganesh","p":"after","k":"BOD","v":6.2,"b":1,"sev":0.356,"pg":69,"file":"Ganesh_and_Durga_visarjan_report-2024.pdf","pr":""},{"s":0,"y":2024,"f":"Ganesh","p":"pre","k":"pH","v":7.27,"b":0,"sev":0.0,"pg":69,"file":"Ganesh_and_Durga_visarjan_report-2024.pdf","pr":""},{"s":0,"y":2024,"f":"Ganesh","p":"during","k":"pH","v":7.36,"b":0,"sev":0.0,"pg":69,"file":"Ganesh_and_Durga_visarjan_report-2024.pdf","pr":""},{"s":0,"y":2024,"f":"Ganesh","p":"after","k":"pH","v":7.22,"b":0,"sev":0.0,"pg":69,"file":"Ganesh_and_Durga_visarjan_report-2024.pdf","pr":""},{"s":0,"y":2024,"f":"Ganesh","p":"pre","k":"DO","v":5.2,"b":0,"sev":0.0,"pg":69,"file":"Ganesh_and_Durga_visarjan_report-2024.pdf","pr":""},{"s":0,"y":2024,"f":"Ganesh","p":"during","k":"DO","v":4.1,"b":1,"sev":0.18,"pg":69,"file":"Ganesh_and_Durga_visarjan_report-2024.pdf","pr":""},{"s":0,"y":2024,"f":"Ganesh","p":"after","k":"DO","v":4.2,"b":1,"sev":0.16,"pg":69,"file":"Ganesh_and_Durga_visarjan_report-2024.pdf","pr":""},{"s":0,"y":2024,"f":"Ganesh","p":"pre","k":"BOD","v":4.2,"b":1,"sev":0.133,"pg":69,"file":"Ganesh_and_Durga_visarjan_report-2024.pdf","pr":""},{"s":0,"y":2024,"f":"Ganesh","p":"during","k":"BOD","v":13.2,"b":1,"sev":1.0,"pg":69,"file":"Ganesh_and_Durga_visarjan_report-2024.pdf","pr":""},{"s":0,"y":2024,"f":"Ganesh","p":"after","k":"BOD","v":14.0,"b":1,"sev":1.0,"pg":69,"file":"Ganesh_and_Durga_visarjan_report-2024.pdf","pr":""},{"s":6,"y":2024,"f":"Ganesh","p":"pre","k":"pH","v":8.02,"b":0,"sev":0.0,"pg":70,"file":"Ganesh_and_Durga_visarjan_report-2024.pdf","pr":""},{"s":6,"y":2024,"f":"Ganesh","p":"during","k":"pH","v":8.55,"b":1,"sev":0.033,"pg":70,"file":"Ganesh_and_Durga_visarjan_report-2024.pdf","pr":""},{"s":6,"y":2024,"f":"Ganesh","p":"after","k":"pH","v":8.05,"b":0,"sev":0.0,"pg":70,"file":"Ganesh_and_Durga_visarjan_report-2024.pdf","pr":""},{"s":6,"y":2024,"f":"Ganesh","p":"pre","k":"DO","v":4.3,"b":1,"sev":0.14,"pg":70,"file":"Ganesh_and_Durga_visarjan_report-2024.pdf","pr":""},{"s":6,"y":2024,"f":"Ganesh","p":"during","k":"DO","v":3.9,"b":1,"sev":0.22,"pg":70,"file":"Ganesh_and_Durga_visarjan_report-2024.pdf","pr":""},{"s":6,"y":2024,"f":"Ganesh","p":"after","k":"DO","v":6.3,"b":0,"sev":0.0,"pg":70,"file":"Ganesh_and_Durga_visarjan_report-2024.pdf","pr":""},{"s":6,"y":2024,"f":"Ganesh","p":"pre","k":"BOD","v":3.2,"b":1,"sev":0.022,"pg":70,"file":"Ganesh_and_Durga_visarjan_report-2024.pdf","pr":""},{"s":6,"y":2024,"f":"Ganesh","p":"during","k":"BOD","v":6.8,"b":1,"sev":0.422,"pg":70,"file":"Ganesh_and_Durga_visarjan_report-2024.pdf","pr":""},{"s":6,"y":2024,"f":"Ganesh","p":"after","k":"BOD","v":5.2,"b":1,"sev":0.244,"pg":70,"file":"Ganesh_and_Durga_visarjan_report-2024.pdf","pr":""},{"s":3,"y":2024,"f":"Ganesh","p":"pre","k":"pH","v":7.35,"b":0,"sev":0.0,"pg":70,"file":"Ganesh_and_Durga_visarjan_report-2024.pdf","pr":""},{"s":3,"y":2024,"f":"Ganesh","p":"during","k":"pH","v":7.31,"b":0,"sev":0.0,"pg":70,"file":"Ganesh_and_Durga_visarjan_report-2024.pdf","pr":""},{"s":3,"y":2024,"f":"Ganesh","p":"after","k":"pH","v":7.63,"b":0,"sev":0.0,"pg":70,"file":"Ganesh_and_Durga_visarjan_report-2024.pdf","pr":""},{"s":3,"y":2024,"f":"Ganesh","p":"pre","k":"DO","v":4.8,"b":1,"sev":0.04,"pg":70,"file":"Ganesh_and_Durga_visarjan_report-2024.pdf","pr":""},{"s":3,"y":2024,"f":"Ganesh","p":"during","k":"DO","v":4.3,"b":1,"sev":0.14,"pg":70,"file":"Ganesh_and_Durga_visarjan_report-2024.pdf","pr":""},{"s":3,"y":2024,"f":"Ganesh","p":"after","k":"DO","v":3.6,"b":1,"sev":0.28,"pg":70,"file":"Ganesh_and_Durga_visarjan_report-2024.pdf","pr":""},{"s":3,"y":2024,"f":"Ganesh","p":"pre","k":"BOD","v":4.8,"b":1,"sev":0.2,"pg":70,"file":"Ganesh_and_Durga_visarjan_report-2024.pdf","pr":""},{"s":3,"y":2024,"f":"Ganesh","p":"during","k":"BOD","v":5.0,"b":1,"sev":0.222,"pg":70,"file":"Ganesh_and_Durga_visarjan_report-2024.pdf","pr":""},{"s":3,"y":2024,"f":"Ganesh","p":"after","k":"BOD","v":6.4,"b":1,"sev":0.378,"pg":70,"file":"Ganesh_and_Durga_visarjan_report-2024.pdf","pr":""},{"s":5,"y":2024,"f":"Ganesh","p":"pre","k":"pH","v":7.93,"b":0,"sev":0.0,"pg":71,"file":"Ganesh_and_Durga_visarjan_report-2024.pdf","pr":""},{"s":5,"y":2024,"f":"Ganesh","p":"during","k":"pH","v":7.29,"b":0,"sev":0.0,"pg":71,"file":"Ganesh_and_Durga_visarjan_report-2024.pdf","pr":""},{"s":5,"y":2024,"f":"Ganesh","p":"after","k":"pH","v":7.38,"b":0,"sev":0.0,"pg":71,"file":"Ganesh_and_Durga_visarjan_report-2024.pdf","pr":""},{"s":5,"y":2024,"f":"Ganesh","p":"pre","k":"DO","v":9.0,"b":0,"sev":0.0,"pg":71,"file":"Ganesh_and_Durga_visarjan_report-2024.pdf","pr":""},{"s":5,"y":2024,"f":"Ganesh","p":"during","k":"DO","v":5.3,"b":0,"sev":0.0,"pg":71,"file":"Ganesh_and_Durga_visarjan_report-2024.pdf","pr":""},{"s":5,"y":2024,"f":"Ganesh","p":"after","k":"DO","v":11.0,"b":0,"sev":0.0,"pg":71,"file":"Ganesh_and_Durga_visarjan_report-2024.pdf","pr":""},{"s":5,"y":2024,"f":"Ganesh","p":"pre","k":"BOD","v":7.2,"b":1,"sev":0.467,"pg":71,"file":"Ganesh_and_Durga_visarjan_report-2024.pdf","pr":""},{"s":5,"y":2024,"f":"Ganesh","p":"during","k":"BOD","v":13.2,"b":1,"sev":1.0,"pg":71,"file":"Ganesh_and_Durga_visarjan_report-2024.pdf","pr":""},{"s":5,"y":2024,"f":"Ganesh","p":"after","k":"BOD","v":22.0,"b":1,"sev":1.0,"pg":71,"file":"Ganesh_and_Durga_visarjan_report-2024.pdf","pr":""},{"s":1,"y":2024,"f":"Ganesh","p":"pre","k":"pH","v":7.48,"b":0,"sev":0.0,"pg":71,"file":"Ganesh_and_Durga_visarjan_report-2024.pdf","pr":""},{"s":1,"y":2024,"f":"Ganesh","p":"during","k":"pH","v":7.38,"b":0,"sev":0.0,"pg":71,"file":"Ganesh_and_Durga_visarjan_report-2024.pdf","pr":""},{"s":1,"y":2024,"f":"Ganesh","p":"after","k":"pH","v":7.38,"b":0,"sev":0.0,"pg":71,"file":"Ganesh_and_Durga_visarjan_report-2024.pdf","pr":""},{"s":1,"y":2024,"f":"Ganesh","p":"pre","k":"DO","v":4.8,"b":1,"sev":0.04,"pg":71,"file":"Ganesh_and_Durga_visarjan_report-2024.pdf","pr":""},{"s":1,"y":2024,"f":"Ganesh","p":"during","k":"DO","v":3.8,"b":1,"sev":0.24,"pg":71,"file":"Ganesh_and_Durga_visarjan_report-2024.pdf","pr":""},{"s":1,"y":2024,"f":"Ganesh","p":"after","k":"DO","v":6.5,"b":0,"sev":0.0,"pg":71,"file":"Ganesh_and_Durga_visarjan_report-2024.pdf","pr":""},{"s":1,"y":2024,"f":"Ganesh","p":"pre","k":"BOD","v":6.6,"b":1,"sev":0.4,"pg":71,"file":"Ganesh_and_Durga_visarjan_report-2024.pdf","pr":""},{"s":1,"y":2024,"f":"Ganesh","p":"during","k":"BOD","v":6.8,"b":1,"sev":0.422,"pg":71,"file":"Ganesh_and_Durga_visarjan_report-2024.pdf","pr":""},{"s":1,"y":2024,"f":"Ganesh","p":"after","k":"BOD","v":8.4,"b":1,"sev":0.6,"pg":71,"file":"Ganesh_and_Durga_visarjan_report-2024.pdf","pr":""},{"s":2,"y":2024,"f":"Ganesh","p":"pre","k":"pH","v":7.88,"b":0,"sev":0.0,"pg":72,"file":"Ganesh_and_Durga_visarjan_report-2024.pdf","pr":""},{"s":2,"y":2024,"f":"Ganesh","p":"during","k":"pH","v":7.61,"b":0,"sev":0.0,"pg":72,"file":"Ganesh_and_Durga_visarjan_report-2024.pdf","pr":""},{"s":2,"y":2024,"f":"Ganesh","p":"after","k":"pH","v":7.92,"b":0,"sev":0.0,"pg":72,"file":"Ganesh_and_Durga_visarjan_report-2024.pdf","pr":""},{"s":2,"y":2024,"f":"Ganesh","p":"pre","k":"DO","v":7.4,"b":0,"sev":0.0,"pg":72,"file":"Ganesh_and_Durga_visarjan_report-2024.pdf","pr":""},{"s":2,"y":2024,"f":"Ganesh","p":"during","k":"DO","v":6.8,"b":0,"sev":0.0,"pg":72,"file":"Ganesh_and_Durga_visarjan_report-2024.pdf","pr":""},{"s":2,"y":2024,"f":"Ganesh","p":"after","k":"DO","v":6.3,"b":0,"sev":0.0,"pg":72,"file":"Ganesh_and_Durga_visarjan_report-2024.pdf","pr":""},{"s":2,"y":2024,"f":"Ganesh","p":"pre","k":"BOD","v":5.8,"b":1,"sev":0.311,"pg":72,"file":"Ganesh_and_Durga_visarjan_report-2024.pdf","pr":""},{"s":2,"y":2024,"f":"Ganesh","p":"during","k":"BOD","v":10.0,"b":1,"sev":0.778,"pg":72,"file":"Ganesh_and_Durga_visarjan_report-2024.pdf","pr":""},{"s":2,"y":2024,"f":"Ganesh","p":"after","k":"BOD","v":6.8,"b":1,"sev":0.422,"pg":72,"file":"Ganesh_and_Durga_visarjan_report-2024.pdf","pr":""},{"s":4,"y":2025,"f":"Ganesh","p":"pre","k":"pH","v":7.34,"b":0,"sev":0.0,"pg":28,"file":"Ganesh_and_Durga_visarjan_report-2025.pdf","pr":""},{"s":4,"y":2025,"f":"Ganesh","p":"during","k":"pH","v":8.0,"b":0,"sev":0.0,"pg":28,"file":"Ganesh_and_Durga_visarjan_report-2025.pdf","pr":""},{"s":4,"y":2025,"f":"Ganesh","p":"after","k":"pH","v":7.76,"b":0,"sev":0.0,"pg":28,"file":"Ganesh_and_Durga_visarjan_report-2025.pdf","pr":""},{"s":4,"y":2025,"f":"Ganesh","p":"pre","k":"DO","v":7.3,"b":0,"sev":0.0,"pg":28,"file":"Ganesh_and_Durga_visarjan_report-2025.pdf","pr":""},{"s":4,"y":2025,"f":"Ganesh","p":"during","k":"DO","v":6.0,"b":0,"sev":0.0,"pg":28,"file":"Ganesh_and_Durga_visarjan_report-2025.pdf","pr":""},{"s":4,"y":2025,"f":"Ganesh","p":"after","k":"DO","v":6.5,"b":0,"sev":0.0,"pg":28,"file":"Ganesh_and_Durga_visarjan_report-2025.pdf","pr":""},{"s":4,"y":2025,"f":"Ganesh","p":"pre","k":"BOD","v":4.4,"b":1,"sev":0.156,"pg":28,"file":"Ganesh_and_Durga_visarjan_report-2025.pdf","pr":""},{"s":4,"y":2025,"f":"Ganesh","p":"during","k":"BOD","v":5.4,"b":1,"sev":0.267,"pg":28,"file":"Ganesh_and_Durga_visarjan_report-2025.pdf","pr":""},{"s":4,"y":2025,"f":"Ganesh","p":"after","k":"BOD","v":5.2,"b":1,"sev":0.244,"pg":28,"file":"Ganesh_and_Durga_visarjan_report-2025.pdf","pr":""},{"s":0,"y":2025,"f":"Ganesh","p":"pre","k":"pH","v":null,"b":0,"sev":0,"pg":28,"file":"Ganesh_and_Durga_visarjan_report-2025.pdf","pr":"*"},{"s":0,"y":2025,"f":"Ganesh","p":"during","k":"pH","v":7.36,"b":0,"sev":0.0,"pg":28,"file":"Ganesh_and_Durga_visarjan_report-2025.pdf","pr":""},{"s":0,"y":2025,"f":"Ganesh","p":"after","k":"pH","v":null,"b":0,"sev":0,"pg":28,"file":"Ganesh_and_Durga_visarjan_report-2025.pdf","pr":"**"},{"s":0,"y":2025,"f":"Ganesh","p":"pre","k":"DO","v":null,"b":0,"sev":0,"pg":28,"file":"Ganesh_and_Durga_visarjan_report-2025.pdf","pr":""},{"s":0,"y":2025,"f":"Ganesh","p":"during","k":"DO","v":0.0,"b":1,"sev":1.0,"pg":28,"file":"Ganesh_and_Durga_visarjan_report-2025.pdf","pr":""},{"s":0,"y":2025,"f":"Ganesh","p":"after","k":"DO","v":null,"b":0,"sev":0,"pg":28,"file":"Ganesh_and_Durga_visarjan_report-2025.pdf","pr":""},{"s":0,"y":2025,"f":"Ganesh","p":"pre","k":"BOD","v":null,"b":0,"sev":0,"pg":28,"file":"Ganesh_and_Durga_visarjan_report-2025.pdf","pr":""},{"s":0,"y":2025,"f":"Ganesh","p":"during","k":"BOD","v":8.0,"b":1,"sev":0.556,"pg":28,"file":"Ganesh_and_Durga_visarjan_report-2025.pdf","pr":""},{"s":0,"y":2025,"f":"Ganesh","p":"after","k":"BOD","v":null,"b":0,"sev":0,"pg":28,"file":"Ganesh_and_Durga_visarjan_report-2025.pdf","pr":""},{"s":6,"y":2025,"f":"Ganesh","p":"pre","k":"pH","v":7.41,"b":0,"sev":0.0,"pg":28,"file":"Ganesh_and_Durga_visarjan_report-2025.pdf","pr":""},{"s":6,"y":2025,"f":"Ganesh","p":"during","k":"pH","v":8.01,"b":0,"sev":0.0,"pg":28,"file":"Ganesh_and_Durga_visarjan_report-2025.pdf","pr":""},{"s":6,"y":2025,"f":"Ganesh","p":"after","k":"pH","v":7.92,"b":0,"sev":0.0,"pg":28,"file":"Ganesh_and_Durga_visarjan_report-2025.pdf","pr":""},{"s":6,"y":2025,"f":"Ganesh","p":"pre","k":"DO","v":6.5,"b":0,"sev":0.0,"pg":28,"file":"Ganesh_and_Durga_visarjan_report-2025.pdf","pr":""},{"s":6,"y":2025,"f":"Ganesh","p":"during","k":"DO","v":5.6,"b":0,"sev":0.0,"pg":28,"file":"Ganesh_and_Durga_visarjan_report-2025.pdf","pr":""},{"s":6,"y":2025,"f":"Ganesh","p":"after","k":"DO","v":6.0,"b":0,"sev":0.0,"pg":28,"file":"Ganesh_and_Durga_visarjan_report-2025.pdf","pr":""},{"s":6,"y":2025,"f":"Ganesh","p":"pre","k":"BOD","v":4.8,"b":1,"sev":0.2,"pg":28,"file":"Ganesh_and_Durga_visarjan_report-2025.pdf","pr":""},{"s":6,"y":2025,"f":"Ganesh","p":"during","k":"BOD","v":4.8,"b":1,"sev":0.2,"pg":28,"file":"Ganesh_and_Durga_visarjan_report-2025.pdf","pr":""},{"s":6,"y":2025,"f":"Ganesh","p":"after","k":"BOD","v":3.0,"b":0,"sev":0.0,"pg":28,"file":"Ganesh_and_Durga_visarjan_report-2025.pdf","pr":""},{"s":3,"y":2025,"f":"Ganesh","p":"pre","k":"pH","v":7.46,"b":0,"sev":0.0,"pg":29,"file":"Ganesh_and_Durga_visarjan_report-2025.pdf","pr":""},{"s":3,"y":2025,"f":"Ganesh","p":"during","k":"pH","v":7.7,"b":0,"sev":0.0,"pg":29,"file":"Ganesh_and_Durga_visarjan_report-2025.pdf","pr":""},{"s":3,"y":2025,"f":"Ganesh","p":"after","k":"pH","v":7.62,"b":0,"sev":0.0,"pg":29,"file":"Ganesh_and_Durga_visarjan_report-2025.pdf","pr":""},{"s":3,"y":2025,"f":"Ganesh","p":"pre","k":"DO","v":6.9,"b":0,"sev":0.0,"pg":29,"file":"Ganesh_and_Durga_visarjan_report-2025.pdf","pr":""},{"s":3,"y":2025,"f":"Ganesh","p":"during","k":"DO","v":6.9,"b":0,"sev":0.0,"pg":29,"file":"Ganesh_and_Durga_visarjan_report-2025.pdf","pr":""},{"s":3,"y":2025,"f":"Ganesh","p":"after","k":"DO","v":6.2,"b":0,"sev":0.0,"pg":29,"file":"Ganesh_and_Durga_visarjan_report-2025.pdf","pr":""},{"s":3,"y":2025,"f":"Ganesh","p":"pre","k":"BOD","v":3.8,"b":1,"sev":0.089,"pg":29,"file":"Ganesh_and_Durga_visarjan_report-2025.pdf","pr":""},{"s":3,"y":2025,"f":"Ganesh","p":"during","k":"BOD","v":6.9,"b":1,"sev":0.433,"pg":29,"file":"Ganesh_and_Durga_visarjan_report-2025.pdf","pr":""},{"s":3,"y":2025,"f":"Ganesh","p":"after","k":"BOD","v":4.8,"b":1,"sev":0.2,"pg":29,"file":"Ganesh_and_Durga_visarjan_report-2025.pdf","pr":""},{"s":5,"y":2025,"f":"Ganesh","p":"pre","k":"pH","v":8.23,"b":0,"sev":0.0,"pg":29,"file":"Ganesh_and_Durga_visarjan_report-2025.pdf","pr":""},{"s":5,"y":2025,"f":"Ganesh","p":"during","k":"pH","v":8.71,"b":1,"sev":0.14,"pg":29,"file":"Ganesh_and_Durga_visarjan_report-2025.pdf","pr":""},{"s":5,"y":2025,"f":"Ganesh","p":"after","k":"pH","v":8.44,"b":0,"sev":0.0,"pg":29,"file":"Ganesh_and_Durga_visarjan_report-2025.pdf","pr":""},{"s":5,"y":2025,"f":"Ganesh","p":"pre","k":"DO","v":5.6,"b":0,"sev":0.0,"pg":29,"file":"Ganesh_and_Durga_visarjan_report-2025.pdf","pr":""},{"s":5,"y":2025,"f":"Ganesh","p":"during","k":"DO","v":7.0,"b":0,"sev":0.0,"pg":29,"file":"Ganesh_and_Durga_visarjan_report-2025.pdf","pr":""},{"s":5,"y":2025,"f":"Ganesh","p":"after","k":"DO","v":6.4,"b":0,"sev":0.0,"pg":29,"file":"Ganesh_and_Durga_visarjan_report-2025.pdf","pr":""},{"s":5,"y":2025,"f":"Ganesh","p":"pre","k":"BOD","v":5.2,"b":1,"sev":0.244,"pg":29,"file":"Ganesh_and_Durga_visarjan_report-2025.pdf","pr":""},{"s":5,"y":2025,"f":"Ganesh","p":"during","k":"BOD","v":10.0,"b":1,"sev":0.778,"pg":29,"file":"Ganesh_and_Durga_visarjan_report-2025.pdf","pr":""},{"s":5,"y":2025,"f":"Ganesh","p":"after","k":"BOD","v":5.2,"b":1,"sev":0.244,"pg":29,"file":"Ganesh_and_Durga_visarjan_report-2025.pdf","pr":""},{"s":1,"y":2025,"f":"Ganesh","p":"pre","k":"pH","v":null,"b":0,"sev":0,"pg":29,"file":"Ganesh_and_Durga_visarjan_report-2025.pdf","pr":"*"},{"s":1,"y":2025,"f":"Ganesh","p":"during","k":"pH","v":7.53,"b":0,"sev":0.0,"pg":29,"file":"Ganesh_and_Durga_visarjan_report-2025.pdf","pr":""},{"s":1,"y":2025,"f":"Ganesh","p":"after","k":"pH","v":null,"b":0,"sev":0,"pg":29,"file":"Ganesh_and_Durga_visarjan_report-2025.pdf","pr":"**"},{"s":1,"y":2025,"f":"Ganesh","p":"pre","k":"DO","v":null,"b":0,"sev":0,"pg":29,"file":"Ganesh_and_Durga_visarjan_report-2025.pdf","pr":""},{"s":1,"y":2025,"f":"Ganesh","p":"during","k":"DO","v":0.6,"b":1,"sev":0.88,"pg":29,"file":"Ganesh_and_Durga_visarjan_report-2025.pdf","pr":""},{"s":1,"y":2025,"f":"Ganesh","p":"after","k":"DO","v":null,"b":0,"sev":0,"pg":29,"file":"Ganesh_and_Durga_visarjan_report-2025.pdf","pr":""},{"s":1,"y":2025,"f":"Ganesh","p":"pre","k":"BOD","v":null,"b":0,"sev":0,"pg":29,"file":"Ganesh_and_Durga_visarjan_report-2025.pdf","pr":""},{"s":1,"y":2025,"f":"Ganesh","p":"during","k":"BOD","v":5.8,"b":1,"sev":0.311,"pg":29,"file":"Ganesh_and_Durga_visarjan_report-2025.pdf","pr":""},{"s":1,"y":2025,"f":"Ganesh","p":"after","k":"BOD","v":null,"b":0,"sev":0,"pg":29,"file":"Ganesh_and_Durga_visarjan_report-2025.pdf","pr":""},{"s":2,"y":2025,"f":"Ganesh","p":"pre","k":"pH","v":7.7,"b":0,"sev":0.0,"pg":30,"file":"Ganesh_and_Durga_visarjan_report-2025.pdf","pr":""},{"s":2,"y":2025,"f":"Ganesh","p":"during","k":"pH","v":7.82,"b":0,"sev":0.0,"pg":30,"file":"Ganesh_and_Durga_visarjan_report-2025.pdf","pr":""},{"s":2,"y":2025,"f":"Ganesh","p":"after","k":"pH","v":7.84,"b":0,"sev":0.0,"pg":30,"file":"Ganesh_and_Durga_visarjan_report-2025.pdf","pr":""},{"s":2,"y":2025,"f":"Ganesh","p":"pre","k":"DO","v":7.0,"b":0,"sev":0.0,"pg":30,"file":"Ganesh_and_Durga_visarjan_report-2025.pdf","pr":""},{"s":2,"y":2025,"f":"Ganesh","p":"during","k":"DO","v":6.0,"b":0,"sev":0.0,"pg":30,"file":"Ganesh_and_Durga_visarjan_report-2025.pdf","pr":""},{"s":2,"y":2025,"f":"Ganesh","p":"after","k":"DO","v":6.5,"b":0,"sev":0.0,"pg":30,"file":"Ganesh_and_Durga_visarjan_report-2025.pdf","pr":""},{"s":2,"y":2025,"f":"Ganesh","p":"pre","k":"BOD","v":4.2,"b":1,"sev":0.133,"pg":30,"file":"Ganesh_and_Durga_visarjan_report-2025.pdf","pr":""},{"s":2,"y":2025,"f":"Ganesh","p":"during","k":"BOD","v":5.0,"b":1,"sev":0.222,"pg":30,"file":"Ganesh_and_Durga_visarjan_report-2025.pdf","pr":""},{"s":2,"y":2025,"f":"Ganesh","p":"after","k":"BOD","v":4.8,"b":1,"sev":0.2,"pg":30,"file":"Ganesh_and_Durga_visarjan_report-2025.pdf","pr":""},{"s":5,"y":2025,"f":"Durga","p":"pre","k":"pH","v":8.14,"b":0,"sev":0.0,"pg":64,"file":"Ganesh_and_Durga_visarjan_report-2025.pdf","pr":""},{"s":5,"y":2025,"f":"Durga","p":"during","k":"pH","v":8.37,"b":0,"sev":0.0,"pg":64,"file":"Ganesh_and_Durga_visarjan_report-2025.pdf","pr":""},{"s":5,"y":2025,"f":"Durga","p":"after","k":"pH","v":8.44,"b":0,"sev":0.0,"pg":64,"file":"Ganesh_and_Durga_visarjan_report-2025.pdf","pr":""},{"s":5,"y":2025,"f":"Durga","p":"pre","k":"DO","v":8.5,"b":0,"sev":0.0,"pg":64,"file":"Ganesh_and_Durga_visarjan_report-2025.pdf","pr":""},{"s":5,"y":2025,"f":"Durga","p":"during","k":"DO","v":8.5,"b":0,"sev":0.0,"pg":64,"file":"Ganesh_and_Durga_visarjan_report-2025.pdf","pr":""},{"s":5,"y":2025,"f":"Durga","p":"after","k":"DO","v":10.8,"b":0,"sev":0.0,"pg":64,"file":"Ganesh_and_Durga_visarjan_report-2025.pdf","pr":""},{"s":5,"y":2025,"f":"Durga","p":"pre","k":"BOD","v":6.8,"b":1,"sev":0.422,"pg":64,"file":"Ganesh_and_Durga_visarjan_report-2025.pdf","pr":""},{"s":5,"y":2025,"f":"Durga","p":"during","k":"BOD","v":8.0,"b":1,"sev":0.556,"pg":64,"file":"Ganesh_and_Durga_visarjan_report-2025.pdf","pr":""},{"s":5,"y":2025,"f":"Durga","p":"after","k":"BOD","v":6.4,"b":1,"sev":0.378,"pg":64,"file":"Ganesh_and_Durga_visarjan_report-2025.pdf","pr":""},{"s":3,"y":2025,"f":"Durga","p":"pre","k":"pH","v":7.92,"b":0,"sev":0.0,"pg":64,"file":"Ganesh_and_Durga_visarjan_report-2025.pdf","pr":""},{"s":3,"y":2025,"f":"Durga","p":"during","k":"pH","v":7.85,"b":0,"sev":0.0,"pg":64,"file":"Ganesh_and_Durga_visarjan_report-2025.pdf","pr":""},{"s":3,"y":2025,"f":"Durga","p":"after","k":"pH","v":7.38,"b":0,"sev":0.0,"pg":64,"file":"Ganesh_and_Durga_visarjan_report-2025.pdf","pr":""},{"s":3,"y":2025,"f":"Durga","p":"pre","k":"DO","v":2.5,"b":1,"sev":0.5,"pg":64,"file":"Ganesh_and_Durga_visarjan_report-2025.pdf","pr":""},{"s":3,"y":2025,"f":"Durga","p":"during","k":"DO","v":2.4,"b":1,"sev":0.52,"pg":64,"file":"Ganesh_and_Durga_visarjan_report-2025.pdf","pr":""},{"s":3,"y":2025,"f":"Durga","p":"after","k":"DO","v":2.6,"b":1,"sev":0.48,"pg":64,"file":"Ganesh_and_Durga_visarjan_report-2025.pdf","pr":""},{"s":3,"y":2025,"f":"Durga","p":"pre","k":"BOD","v":6.8,"b":1,"sev":0.422,"pg":64,"file":"Ganesh_and_Durga_visarjan_report-2025.pdf","pr":""},{"s":3,"y":2025,"f":"Durga","p":"during","k":"BOD","v":8.8,"b":1,"sev":0.644,"pg":64,"file":"Ganesh_and_Durga_visarjan_report-2025.pdf","pr":""},{"s":3,"y":2025,"f":"Durga","p":"after","k":"BOD","v":4.8,"b":1,"sev":0.2,"pg":64,"file":"Ganesh_and_Durga_visarjan_report-2025.pdf","pr":""},{"s":4,"y":2025,"f":"Durga","p":"pre","k":"pH","v":8.17,"b":0,"sev":0.0,"pg":64,"file":"Ganesh_and_Durga_visarjan_report-2025.pdf","pr":""},{"s":4,"y":2025,"f":"Durga","p":"during","k":"pH","v":7.72,"b":0,"sev":0.0,"pg":64,"file":"Ganesh_and_Durga_visarjan_report-2025.pdf","pr":""},{"s":4,"y":2025,"f":"Durga","p":"after","k":"pH","v":7.81,"b":0,"sev":0.0,"pg":64,"file":"Ganesh_and_Durga_visarjan_report-2025.pdf","pr":""},{"s":4,"y":2025,"f":"Durga","p":"pre","k":"DO","v":7.1,"b":0,"sev":0.0,"pg":64,"file":"Ganesh_and_Durga_visarjan_report-2025.pdf","pr":""},{"s":4,"y":2025,"f":"Durga","p":"during","k":"DO","v":6.2,"b":0,"sev":0.0,"pg":64,"file":"Ganesh_and_Durga_visarjan_report-2025.pdf","pr":""},{"s":4,"y":2025,"f":"Durga","p":"after","k":"DO","v":6.6,"b":0,"sev":0.0,"pg":64,"file":"Ganesh_and_Durga_visarjan_report-2025.pdf","pr":""},{"s":4,"y":2025,"f":"Durga","p":"pre","k":"BOD","v":4.4,"b":1,"sev":0.156,"pg":64,"file":"Ganesh_and_Durga_visarjan_report-2025.pdf","pr":""},{"s":4,"y":2025,"f":"Durga","p":"during","k":"BOD","v":4.6,"b":1,"sev":0.178,"pg":64,"file":"Ganesh_and_Durga_visarjan_report-2025.pdf","pr":""},{"s":4,"y":2025,"f":"Durga","p":"after","k":"BOD","v":3.1,"b":1,"sev":0.011,"pg":64,"file":"Ganesh_and_Durga_visarjan_report-2025.pdf","pr":""},{"s":6,"y":2025,"f":"Durga","p":"pre","k":"pH","v":8.25,"b":0,"sev":0.0,"pg":65,"file":"Ganesh_and_Durga_visarjan_report-2025.pdf","pr":""},{"s":6,"y":2025,"f":"Durga","p":"during","k":"pH","v":8.24,"b":0,"sev":0.0,"pg":65,"file":"Ganesh_and_Durga_visarjan_report-2025.pdf","pr":""},{"s":6,"y":2025,"f":"Durga","p":"after","k":"pH","v":8.29,"b":0,"sev":0.0,"pg":65,"file":"Ganesh_and_Durga_visarjan_report-2025.pdf","pr":""},{"s":6,"y":2025,"f":"Durga","p":"pre","k":"DO","v":6.6,"b":0,"sev":0.0,"pg":65,"file":"Ganesh_and_Durga_visarjan_report-2025.pdf","pr":""},{"s":6,"y":2025,"f":"Durga","p":"during","k":"DO","v":4.9,"b":1,"sev":0.02,"pg":65,"file":"Ganesh_and_Durga_visarjan_report-2025.pdf","pr":""},{"s":6,"y":2025,"f":"Durga","p":"after","k":"DO","v":8.2,"b":0,"sev":0.0,"pg":65,"file":"Ganesh_and_Durga_visarjan_report-2025.pdf","pr":""},{"s":6,"y":2025,"f":"Durga","p":"pre","k":"BOD","v":4.4,"b":1,"sev":0.156,"pg":65,"file":"Ganesh_and_Durga_visarjan_report-2025.pdf","pr":""},{"s":6,"y":2025,"f":"Durga","p":"during","k":"BOD","v":4.8,"b":1,"sev":0.2,"pg":65,"file":"Ganesh_and_Durga_visarjan_report-2025.pdf","pr":""},{"s":6,"y":2025,"f":"Durga","p":"after","k":"BOD","v":3.2,"b":1,"sev":0.022,"pg":65,"file":"Ganesh_and_Durga_visarjan_report-2025.pdf","pr":""},{"s":2,"y":2025,"f":"Durga","p":"pre","k":"pH","v":7.88,"b":0,"sev":0.0,"pg":65,"file":"Ganesh_and_Durga_visarjan_report-2025.pdf","pr":""},{"s":2,"y":2025,"f":"Durga","p":"during","k":"pH","v":7.36,"b":0,"sev":0.0,"pg":65,"file":"Ganesh_and_Durga_visarjan_report-2025.pdf","pr":""},{"s":2,"y":2025,"f":"Durga","p":"after","k":"pH","v":7.35,"b":0,"sev":0.0,"pg":65,"file":"Ganesh_and_Durga_visarjan_report-2025.pdf","pr":""},{"s":2,"y":2025,"f":"Durga","p":"pre","k":"DO","v":2.5,"b":1,"sev":0.5,"pg":65,"file":"Ganesh_and_Durga_visarjan_report-2025.pdf","pr":""},{"s":2,"y":2025,"f":"Durga","p":"during","k":"DO","v":2.8,"b":1,"sev":0.44,"pg":65,"file":"Ganesh_and_Durga_visarjan_report-2025.pdf","pr":""},{"s":2,"y":2025,"f":"Durga","p":"after","k":"DO","v":7.4,"b":0,"sev":0.0,"pg":65,"file":"Ganesh_and_Durga_visarjan_report-2025.pdf","pr":""},{"s":2,"y":2025,"f":"Durga","p":"pre","k":"BOD","v":6.8,"b":1,"sev":0.422,"pg":65,"file":"Ganesh_and_Durga_visarjan_report-2025.pdf","pr":""},{"s":2,"y":2025,"f":"Durga","p":"during","k":"BOD","v":11.4,"b":1,"sev":0.933,"pg":65,"file":"Ganesh_and_Durga_visarjan_report-2025.pdf","pr":""},{"s":2,"y":2025,"f":"Durga","p":"after","k":"BOD","v":10.4,"b":1,"sev":0.822,"pg":65,"file":"Ganesh_and_Durga_visarjan_report-2025.pdf","pr":""}]}</script>
@@ -1081,6 +1156,180 @@ main { padding-bottom:16px; }
     if (navigator.clipboard && window.isSecureContext) navigator.clipboard.writeText(text).then(function () { done(true); }, function () { fallback(text); });
     else fallback(text);
   });
+
+
+  /* ---------- views: dashboard / files tab ---------- */
+  function applyView(scroll) {
+    var f = location.hash === '#files';
+    document.body.classList.toggle('view-files', f);
+    $$('.nav a').forEach(function (a) { if (f) a.setAttribute('aria-current', String(a.getAttribute('href') === '#files')); });
+    if (f) { if (scroll) window.scrollTo(0, 0); return; }
+    var id = location.hash.slice(1), t = id && document.getElementById(id);
+    if (t && scroll) t.scrollIntoView();
+  }
+  window.addEventListener('hashchange', function () { applyView(true); });
+
+  /* ---------- officer files (stored in this browser only) ---------- */
+  var FS = {
+    en: { size: 'Files over 25 MB are not accepted.', bad: 'Only PDF and CSV files can be added.', notpdf: 'does not look like a PDF.', added: 'Added', open: 'Open', remove: 'Remove', preview: 'Preview', check: 'Check',
+      rows: 'rows', valid: 'readings checked', unknownCols: 'Missing required columns:', outside: 'outside the Class B limit', skipped: 'Rows skipped (no number or unknown test)', unknownGhat: 'Unknown ghat',
+      ghat: 'Ghat', test: 'Test', reading: 'Reading', limit: 'Limit', when: 'When', status: 'Status', outTag: 'Outside limit', inTag: 'Within limit', noneOut: 'No readings outside the limit in this file.',
+      note: 'Officer-added readings are checked on your device only. They are not part of the ranking or the incident list above.', storeErr: 'This browser could not keep the files after you close the page.',
+      csvErr: 'This CSV could not be read.', close: 'Close', matched: 'Matches' },
+    hi: { size: '25 MB से बड़ी फ़ाइलें नहीं ली जातीं।', bad: 'केवल PDF और CSV फ़ाइलें जोड़ी जा सकती हैं।', notpdf: 'PDF जैसी नहीं लगती।', added: 'जोड़ी गई', open: 'खोलें', remove: 'हटाएँ', preview: 'पूर्वावलोकन', check: 'जाँचें',
+      rows: 'पंक्तियाँ', valid: 'रीडिंग जाँची गईं', unknownCols: 'ज़रूरी कॉलम नहीं मिले:', outside: 'क्लास B सीमा से बाहर', skipped: 'छोड़ी गई पंक्तियाँ (संख्या नहीं या अज्ञात जाँच)', unknownGhat: 'अज्ञात घाट',
+      ghat: 'घाट', test: 'जाँच', reading: 'रीडिंग', limit: 'सीमा', when: 'कब', status: 'स्थिति', outTag: 'सीमा से बाहर', inTag: 'सीमा में', noneOut: 'इस फ़ाइल में कोई रीडिंग सीमा से बाहर नहीं है।',
+      note: 'अधिकारी द्वारा जोड़ी गई रीडिंग केवल आपके डिवाइस पर जाँची जाती है। वे ऊपर की रैंकिंग या घटना सूची का हिस्सा नहीं हैं।', storeErr: 'पेज बंद करने के बाद यह ब्राउज़र फ़ाइलें नहीं रख सका।',
+      csvErr: 'यह CSV पढ़ी नहीं जा सकी।', close: 'बंद करें', matched: 'मिलान' }
+  };
+  function FT() { return FS[lang]; }
+  var drop = $('#drop');
+  if (drop) {
+    var MAX = 25 * 1024 * 1024, mem = [], dbp = null, persistOK = true, sel = null;
+    var list = $('#file-list'), emptyBox = $('#file-empty'), msg = $('#file-msg');
+    var openDB = function () {
+      if (dbp) return dbp;
+      dbp = new Promise(function (res, rej) {
+        try {
+          var rq = indexedDB.open('ghatwatch-files', 1);
+          rq.onupgradeneeded = function () { rq.result.createObjectStore('files', { keyPath: 'id' }); };
+          rq.onsuccess = function () { res(rq.result); }; rq.onerror = function () { rej(rq.error); };
+        } catch (e) { rej(e); }
+      });
+      return dbp;
+    };
+    var tx = function (mode, fn) { return openDB().then(function (db) { return new Promise(function (res, rej) { var t = db.transaction('files', mode), r = fn(t.objectStore('files')); t.oncomplete = function () { res(r && r.result); }; t.onerror = function () { rej(t.error); }; }); }); };
+    var loadAll = function () { return tx('readonly', function (s) { return s.getAll(); }).catch(function () { persistOK = false; return []; }); };
+    var saveOne = function (rec) { return tx('readwrite', function (s) { return s.put(rec); }).catch(function () { persistOK = false; msg.textContent = FT().storeErr; }); };
+    var delOne = function (id) { return tx('readwrite', function (s) { return s.delete(id); }).catch(function () {}); };
+
+    var kb = function (n) { return n > 1048576 ? (n / 1048576).toFixed(1) + ' MB' : Math.max(1, Math.round(n / 1024)) + ' KB'; };
+    var kindOf = function (f) { var n = f.name.toLowerCase(); return n.slice(-4) === '.pdf' || f.type === 'application/pdf' ? 'pdf' : (n.slice(-4) === '.csv' || f.type === 'text/csv' ? 'csv' : ''); };
+
+    function renderList() {
+      list.textContent = '';
+      emptyBox.hidden = mem.length > 0;
+      mem.slice().sort(function (a, b) { return b.added - a.added; }).forEach(function (r) {
+        var li = document.createElement('li'); li.className = 'file' + (sel === r.id ? ' on' : '');
+        var k = document.createElement('span'); k.className = 'kind kind-' + r.kind; k.textContent = r.kind.toUpperCase(); li.appendChild(k);
+        var info = document.createElement('div'); info.className = 'finfo';
+        var nm = document.createElement('b'); nm.textContent = r.name; info.appendChild(nm);
+        var sub = document.createElement('span'); sub.className = 'muted small';
+        sub.textContent = kb(r.size) + ' · ' + FT().added + ' ' + new Date(r.added).toLocaleString(lang === 'hi' ? 'hi-IN' : 'en-IN', { dateStyle: 'medium', timeStyle: 'short' }); info.appendChild(sub);
+        li.appendChild(info);
+        var act = document.createElement('div'); act.className = 'fact';
+        var b1 = document.createElement('button'); b1.type = 'button'; b1.className = 'btn ghost'; b1.textContent = r.kind === 'pdf' ? FT().preview : FT().check;
+        b1.addEventListener('click', function () { show(r); }); act.appendChild(b1);
+        if (r.kind === 'pdf') {
+          var b2 = document.createElement('button'); b2.type = 'button'; b2.className = 'btn ghost'; b2.textContent = FT().open;
+          b2.addEventListener('click', function () { window.open(URL.createObjectURL(r.blob), '_blank', 'noopener'); }); act.appendChild(b2);
+        }
+        var b3 = document.createElement('button'); b3.type = 'button'; b3.className = 'btn ghost danger'; b3.textContent = FT().remove;
+        b3.addEventListener('click', function () { mem = mem.filter(function (x) { return x.id !== r.id; }); delOne(r.id); if (sel === r.id) { sel = null; $('#csv-result').hidden = true; $('#pdf-prev').hidden = true; } renderList(); });
+        act.appendChild(b3); li.appendChild(act); list.appendChild(li);
+      });
+    }
+
+    /* CSV: RFC 4180 style parser */
+    function parseCSV(text) {
+      var rows = [], row = [], cur = '', q = false, i = 0;
+      if (text.charCodeAt(0) === 0xFEFF) text = text.slice(1);
+      for (; i < text.length; i++) {
+        var c = text[i];
+        if (q) { if (c === '"') { if (text[i + 1] === '"') { cur += '"'; i++; } else q = false; } else cur += c; }
+        else if (c === '"') q = true;
+        else if (c === ',') { row.push(cur); cur = ''; }
+        else if (c === '\n' || c === '\r') { if (c === '\r' && text[i + 1] === '\n') i++; row.push(cur); cur = ''; if (row.length > 1 || row[0] !== '') rows.push(row); row = []; }
+        else cur += c;
+      }
+      if (cur !== '' || row.length) { row.push(cur); rows.push(row); }
+      return rows;
+    }
+    var paramKey = function (s) { s = (s || '').toLowerCase().replace(/\s+/g, ' ').trim(); if (s === 'do' || s.indexOf('dissolved oxygen') === 0) return 'DO'; if (s.indexOf('bod') === 0) return 'BOD'; if (s === 'ph') return 'pH'; return ''; };
+    var outside = function (L, v) { return L.kind === 'min' ? v < L.low : L.kind === 'max' ? v > L.high : (v < L.low || v > L.high); };
+    var matchSite = function (name) {
+      var n = (name || '').toLowerCase(); if (!n) return -1;
+      for (var i = 0; i < DATA.sites.length; i++) { if (n.indexOf(DATA.sites[i].en.toLowerCase()) > -1) return i; }
+      return -1;
+    };
+    function checkCSV(rec) {
+      var box = $('#csv-result'); $('#pdf-prev').hidden = true; box.hidden = false; box.textContent = '';
+      rec.blob.text().then(function (text) {
+        var rows = parseCSV(text), head = (rows[0] || []).map(function (h) { return h.trim().toLowerCase(); });
+        var ix = function (n) { return head.indexOf(n); };
+        var need = ['site', 'parameter', 'value'].filter(function (n) { return ix(n) < 0; });
+        var h3 = document.createElement('h3'); h3.textContent = rec.name; box.appendChild(h3);
+        if (need.length) {
+          var e = document.createElement('div'); e.className = 'state err'; e.setAttribute('role', 'alert');
+          e.innerHTML = '<b></b><span></span>'; e.firstChild.textContent = FT().unknownCols + ' ' + need.join(', ');
+          e.lastChild.textContent = head.join(', ') || '—'; box.appendChild(e); return;
+        }
+        var data = rows.slice(1), checked = 0, skipped = 0, out = [], unknown = 0;
+        data.forEach(function (r) {
+          var k = paramKey(r[ix('parameter')]), v = parseFloat((r[ix('value')] || '').replace(',', '.'));
+          if (!k || !isFinite(v)) { skipped++; return; }
+          checked++;
+          var L = DATA.limits[k], si = matchSite(r[ix('site')]); if (si < 0) unknown++;
+          if (outside(L, v)) out.push({ site: r[ix('site')], si: si, k: k, v: v, L: L, when: [ix('year') > -1 ? r[ix('year')] : '', ix('festival') > -1 ? r[ix('festival')] : '', ix('phase') > -1 ? r[ix('phase')] : ''].filter(Boolean).join(' · ') });
+        });
+        var sum = document.createElement('ul'); sum.className = 'sev-summary';
+        [[data.length, FT().rows], [checked, FT().valid], [out.length, FT().outside]].forEach(function (p) {
+          var li = document.createElement('li'); var b = document.createElement('b'); b.textContent = p[0]; var s = document.createElement('span'); s.className = 'muted'; s.textContent = p[1]; li.appendChild(b); li.appendChild(s); sum.appendChild(li);
+        }); box.appendChild(sum);
+        if (skipped || unknown) { var p = document.createElement('p'); p.className = 'muted small'; p.textContent = (skipped ? FT().skipped + ': ' + skipped + '. ' : '') + (unknown ? FT().unknownGhat + ': ' + unknown + '.' : ''); box.appendChild(p); }
+        if (!out.length) { var n = document.createElement('p'); n.textContent = FT().noneOut; box.appendChild(n); }
+        else {
+          var wrap = document.createElement('div'); wrap.className = 'tscroll'; var t = document.createElement('table');
+          var th = '<thead><tr>' + [FT().ghat, FT().test, FT().reading, FT().limit, FT().when].map(function (x) { return '<th>' + x + '</th>'; }).join('') + '</tr></thead>';
+          t.innerHTML = th; var tb = document.createElement('tbody');
+          out.slice(0, 200).forEach(function (o) {
+            var tr = document.createElement('tr');
+            var cells = [o.si > -1 ? (lang === 'hi' ? DATA.sites[o.si].hi : DATA.sites[o.si].en) : (o.site + ' (' + FT().unknownGhat + ')'), o.k, o.v + (o.L.unit ? ' ' + o.L.unit : ''), o.L.text, o.when || '–'];
+            cells.forEach(function (c, i) { var td = document.createElement('td'); td.textContent = c; if (i === 2) td.className = 'num'; tr.appendChild(td); }); tb.appendChild(tr);
+          });
+          t.appendChild(tb); wrap.appendChild(t); box.appendChild(wrap);
+        }
+        var nt = document.createElement('p'); nt.className = 'muted small'; nt.textContent = FT().note; box.appendChild(nt);
+      }).catch(function () { var e = document.createElement('div'); e.className = 'state err'; e.setAttribute('role', 'alert'); e.innerHTML = '<b></b>'; e.firstChild.textContent = FT().csvErr; box.appendChild(e); });
+    }
+    function showPDF(rec) {
+      var box = $('#pdf-prev'); $('#csv-result').hidden = true; box.hidden = false; box.textContent = '';
+      var h3 = document.createElement('h3'); h3.textContent = rec.name; box.appendChild(h3);
+      var f = document.createElement('iframe'); f.title = rec.name; f.src = URL.createObjectURL(rec.blob); box.appendChild(f);
+    }
+    function show(rec) { sel = rec.id; renderList(); if (rec.kind === 'pdf') showPDF(rec); else checkCSV(rec); }
+
+    function addFiles(files) {
+      msg.textContent = '';
+      var problems = [], jobs = [];
+      Array.prototype.forEach.call(files, function (f) {
+        var k = kindOf(f);
+        if (!k) { problems.push(f.name + ': ' + FT().bad); return; }
+        if (f.size > MAX) { problems.push(f.name + ': ' + FT().size); return; }
+        jobs.push((k === 'pdf' ? f.slice(0, 5).text().then(function (h) { return h.indexOf('%PDF') === 0; }) : Promise.resolve(true)).then(function (ok) {
+          if (!ok) { problems.push(f.name + ' ' + FT().notpdf); return null; }
+          var rec = { id: Date.now() + '-' + Math.random().toString(36).slice(2, 8), name: f.name, kind: k, size: f.size, added: Date.now(), blob: f };
+          mem.push(rec); return saveOne(rec).then(function () { return rec; });
+        }));
+      });
+      Promise.all(jobs).then(function (recs) {
+        renderList(); var last = recs.filter(Boolean).pop(); if (last) show(last);
+        if (problems.length) msg.textContent = problems.join(' ');
+      });
+    }
+    $('#file-pick').addEventListener('click', function () { $('#file-in').click(); });
+    $('#file-in').addEventListener('change', function () { addFiles(this.files); this.value = ''; });
+    ['dragenter', 'dragover'].forEach(function (ev) { drop.addEventListener(ev, function (e) { e.preventDefault(); drop.classList.add('over'); }); });
+    ['dragleave', 'drop'].forEach(function (ev) { drop.addEventListener(ev, function (e) { e.preventDefault(); drop.classList.remove('over'); }); });
+    drop.addEventListener('drop', function (e) { if (e.dataTransfer && e.dataTransfer.files) addFiles(e.dataTransfer.files); });
+    $('#tpl').addEventListener('click', function () {
+      var blob = new Blob(['site,parameter,value,year,festival,phase\r\n'], { type: 'text/csv' });
+      var a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'ghatwatch_readings_template.csv'; a.click();
+    });
+    listeners.push(renderList);
+    loadAll().then(function (rs) { mem = rs.filter(function (r) { return r && r.blob; }); renderList(); });
+  }
+  applyView(true);
 
   try { var saved = localStorage.getItem('ghatwatch-lang'); if (saved) setLang(saved); } catch (e) {}
 })();
