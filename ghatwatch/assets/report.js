@@ -125,7 +125,7 @@
     if (!ev.length || !shown.length) {
       host.innerHTML = '<div class="state"><b>' + S().empty + '</b><span>' + S().emptyHelp + '</span><button type="button" class="btn ghost" id="chart-reset">' + S().reset + '</button></div>';
       $('#chart-reset').addEventListener('click', resetChart);
-      $('#chart-table').hidden = true; $('#view-table').hidden = true; $('#chart-legend').hidden = true;
+      $('#chart-table').hidden = true; $('#view-table').hidden = true; $('#chart-legend').hidden = true; if ($('#phase-sum')) $('#phase-sum').textContent = '';
       wrap.classList.add('ready');
       return;
     }
@@ -211,6 +211,7 @@
     });
     host.appendChild(svg);
     drawTable(shown, ev, k, unit);
+    renderPhase(shown, ev, k, unit);
     wrap.classList.add('ready');
   }
   function showTip(g, W) {
@@ -321,6 +322,142 @@
     render(false);
   }
 
+
+  /* ---------- helpers for built DOM ---------- */
+  function E(tag, cls, text) { var e = document.createElement(tag); if (cls) e.className = cls; if (text !== undefined) e.textContent = text; return e; }
+  var FEST = { Ganesh: { en: 'Ganesh', hi: 'गणेश' }, Durga: { en: 'Durga', hi: 'दुर्गा' } };
+  var fest = function (f) { return FEST[f] ? FEST[f][lang] : f; };
+  var sgn = function (d) { return (d > 0 ? '+' : d < 0 ? '\u2212' : '') + fmtN(Math.abs(d)); };
+  var PN = { DO: { en: 'Dissolved oxygen (DO)', hi: 'घुलित ऑक्सीजन (DO)' }, BOD: { en: 'BOD', hi: 'BOD' }, pH: { en: 'pH', hi: 'pH' } };
+  var CS = {
+    en: { measured: 'measured', outOf: 'outside the limit', worst: 'Worst reading', closest: 'Closest to the limit', none: 'none measured', part: 'Part score', missing: 'missing', rank: 'Rank', range: 'range',
+      pick: 'Pick at least two ghats to compare.', max: 'You can compare up to three ghats. Unselect one first.', why: 'Why they differ',
+      gap: function (a, b, d, P, pa, pb) { return a + ' scores ' + d + ' points ' + (d >= 0 ? 'above ' : 'below ') + b + '. The largest difference is in ' + P + ' (part score ' + pa + ' vs ' + pb + ').'; },
+      overlap: 'Their score ranges overlap, so the order between them is not firm.', same: 'The part scores are the same for these two.',
+      phaseTitle: 'Before, during and after immersion', phaseNote: 'These are changes between measured readings. They do not show what caused them.',
+      dDuring: 'During vs before', dAfter: 'One week after vs before', preOut: 'Already outside the limit before immersion.', someMiss: 'Not every phase was sampled.' },
+    hi: { measured: 'मापी', outOf: 'सीमा से बाहर', worst: 'सबसे ख़राब रीडिंग', closest: 'सीमा के सबसे नज़दीक', none: 'कोई रीडिंग नहीं', part: 'भाग स्कोर', missing: 'छूटी', rank: 'रैंक', range: 'दायरा',
+      pick: 'तुलना के लिए कम से कम दो घाट चुनें।', max: 'अधिकतम तीन घाटों की तुलना हो सकती है। पहले किसी एक का चयन हटाएँ।', why: 'अंतर क्यों है',
+      gap: function (a, b, d, P, pa, pb) { return a + ' का स्कोर ' + b + ' से ' + Math.abs(d) + ' अंक ' + (d >= 0 ? 'अधिक' : 'कम') + ' है। सबसे बड़ा अंतर ' + P + ' में है (भाग स्कोर ' + pa + ' बनाम ' + pb + ')।'; },
+      overlap: 'इनके स्कोर दायरे मिलते हैं, इसलिए इनके बीच का क्रम पक्का नहीं है।', same: 'इन दोनों के भाग स्कोर समान हैं।',
+      phaseTitle: 'विसर्जन से पहले, दौरान और बाद', phaseNote: 'ये मापी गई रीडिंग के बीच के बदलाव हैं। ये नहीं बताते कि बदलाव का कारण क्या था।',
+      dDuring: 'दौरान बनाम पहले', dAfter: 'एक सप्ताह बाद बनाम पहले', preOut: 'विसर्जन से पहले ही सीमा से बाहर।', someMiss: 'हर चरण का नमूना नहीं लिया गया।' }
+  };
+  var CT = function () { return CS[lang]; };
+
+  /* ---------- before / during / after summary under the chart ---------- */
+  function renderPhase(shown, ev, k, unit) {
+    var box = $('#phase-sum'); if (!box) return; box.textContent = '';
+    var any = false, ul = E('ul', 'phase-list');
+    ev.forEach(function (e) {
+      var rs = shown.filter(function (r) { return r.y === e.y && r.f === e.f; }); if (!rs.length) return;
+      any = true;
+      var by = {}; rs.forEach(function (r) { by[r.p] = r; });
+      var li = E('li'); li.appendChild(E('b', '', e.y + ' ' + fest(e.f)));
+      var row = E('div', 'phase-row');
+      ['pre', 'during', 'after'].forEach(function (p, i) {
+        var r = by[p], c = E('span', 'ph ' + (!r || r.v === null ? 'ph-miss' : r.b ? 'ph-out' : 'ph-in'));
+        c.appendChild(E('small', '', S().phase[p])); c.appendChild(E('strong', '', !r || r.v === null ? '\u2013' : fmtN(r.v)));
+        row.appendChild(c);
+        if (i < 2) { var ar = E('span', 'ph-arrow', '\u2192'); ar.setAttribute('aria-hidden', 'true'); row.appendChild(ar); }
+      });
+      if (unit) row.appendChild(E('span', 'muted small', unit));
+      li.appendChild(row);
+      var pre = by.pre, du = by.during, af = by.after, bits = [], ok = function (r) { return r && r.v !== null; };
+      if (ok(pre) && ok(du)) bits.push(CT().dDuring + ': ' + sgn(du.v - pre.v) + (unit ? ' ' + unit : ''));
+      if (ok(pre) && ok(af)) bits.push(CT().dAfter + ': ' + sgn(af.v - pre.v) + (unit ? ' ' + unit : ''));
+      if (ok(pre) && pre.b) bits.push(CT().preOut);
+      if (!ok(pre) || !ok(du) || !ok(af)) bits.push(CT().someMiss);
+      li.appendChild(E('div', 'muted small', bits.join(' \u00b7 ')));
+      ul.appendChild(li);
+    });
+    if (!any) return;
+    box.appendChild(E('h4', '', CT().phaseTitle)); box.appendChild(ul); box.appendChild(E('p', 'muted small', CT().phaseNote));
+  }
+
+  /* ---------- compare ghats ---------- */
+  var chips = $('#cmp-chips');
+  if (chips && DATA && DATA.ghats) {
+    var picked = $$('button', chips).filter(function (b) { return b.getAttribute('aria-pressed') === 'true'; }).map(function (b) { return +b.getAttribute('data-i'); });
+    var gname = function (i) { return lang === 'hi' ? DATA.sites[i].hi : DATA.sites[i].en; };
+    var renderCompare = function () {
+      var out = $('#cmp-out'); out.textContent = '';
+      if (picked.length < 2) { var st = E('div', 'state panel'); st.appendChild(E('b', '', CT().pick)); out.appendChild(st); return; }
+      var list = picked.slice().sort(function (a, b) { return DATA.ghats[b].score - DATA.ghats[a].score; });
+      var grid = E('div', 'cmp-grid cols-' + list.length);
+      list.forEach(function (i) {
+        var g = DATA.ghats[i], card = E('article', 'panel cmp-card');
+        var head = E('div', 'cmp-head'); head.appendChild(E('span', 'rank', String(g.rank)));
+        var nm = E('div'); nm.appendChild(E('h3', '', gname(i))); nm.appendChild(E('span', 'muted small', CT().range + ' ' + g.lo + '\u2013' + g.hi)); head.appendChild(nm);
+        head.appendChild(E('span', 'cmp-score', String(g.score))); card.appendChild(head);
+        ['DO', 'BOD', 'pH'].forEach(function (P) {
+          var x = g.parts[P], frac = x.measured ? x.breaches / x.measured : 0, blk = E('div', 'cmp-param');
+          blk.appendChild(E('div', 'cmp-pname', PN[P][lang]));
+          var m = E('div', 'pill-meter' + (frac < .5 ? ' warn' : '')); m.setAttribute('aria-hidden', 'true');
+          var f = E('i', '', Math.round(frac * 100) + '%'); f.style.width = Math.max(frac * 100, 0) + '%'; m.appendChild(f); blk.appendChild(m);
+          blk.appendChild(E('div', 'small', x.breaches + ' / ' + x.measured + ' ' + CT().outOf + (x.missing ? ' \u00b7 ' + x.missing + ' ' + CT().missing : '')));
+          var w = x.worst, wt = w ? fmtN(w.v) + (DATA.limits[P].unit ? ' ' + DATA.limits[P].unit : '') + ' \u00b7 ' + w.y + ' ' + fest(w.f) + ', p.' + w.pg : CT().none;
+          blk.appendChild(E('div', 'muted small', (x.breaches ? CT().worst : CT().closest) + ': ' + wt));
+          blk.appendChild(E('div', 'muted small', CT().part + ': ' + x.part));
+          card.appendChild(blk);
+        });
+        grid.appendChild(card);
+      });
+      out.appendChild(grid);
+      var why = E('div', 'panel cmp-why'); why.appendChild(E('h3', '', CT().why));
+      for (var j = 0; j < list.length - 1; j++) {
+        var a = DATA.ghats[list[j]], b = DATA.ghats[list[j + 1]], best = null;
+        ['DO', 'BOD', 'pH'].forEach(function (P) { var d = a.parts[P].part - b.parts[P].part; if (!best || Math.abs(d) > Math.abs(best.d)) best = { P: P, d: d }; });
+        var txt = best.d === 0 ? CT().same : CT().gap(gname(list[j]), gname(list[j + 1]), Math.round((a.score - b.score) * 10) / 10, PN[best.P][lang], a.parts[best.P].part, b.parts[best.P].part);
+        if (a.lo <= b.hi && b.lo <= a.hi) txt += ' ' + CT().overlap;
+        why.appendChild(E('p', '', txt));
+      }
+      out.appendChild(why);
+    };
+    $$('button', chips).forEach(function (b) {
+      b.addEventListener('click', function () {
+        var i = +b.getAttribute('data-i'), on = picked.indexOf(i) > -1, msg = $('#cmp-msg'); msg.textContent = '';
+        if (on) picked = picked.filter(function (x) { return x !== i; });
+        else if (picked.length >= 3) { msg.textContent = CT().max; return; }
+        else picked.push(i);
+        b.setAttribute('aria-pressed', String(!on)); renderCompare();
+      });
+    });
+    listeners.push(renderCompare); renderCompare();
+  }
+
+  /* ---------- suggested-checks checklist (ticks kept in this browser) ---------- */
+  $$('input[data-chk]').forEach(function (cb) {
+    var key = 'jn-chk:' + cb.getAttribute('data-chk'), box = cb.closest('details');
+    var recount = function () {
+      var cnt = $('.cnt', box), all = $$('input[data-chk]', box); cnt.textContent = '(' + all.filter(function (c) { return c.checked; }).length + '/' + all.length + ')';
+    };
+    try { cb.checked = localStorage.getItem(key) === '1'; } catch (e) {}
+    cb.addEventListener('change', function () { try { localStorage.setItem(key, cb.checked ? '1' : '0'); } catch (e) {} recount(); });
+    recount();
+  });
+
+  /* ---------- print / save the brief as PDF ---------- */
+  var dl = $('#dl-pdf');
+  if (dl) dl.addEventListener('click', function () {
+    $('#pb-date').textContent = (lang === 'hi' ? 'मुद्रित: ' : 'Printed: ') + new Date().toLocaleDateString(lang === 'hi' ? 'hi-IN' : 'en-IN', { dateStyle: 'long' });
+    document.body.classList.add('print-brief');
+    var off = function () { document.body.classList.remove('print-brief'); window.removeEventListener('afterprint', off); };
+    window.addEventListener('afterprint', off);
+    setTimeout(function () { window.print(); }, 60);
+  });
+
+  /* ---------- keyboard access for scrollable tables ---------- */
+  var scrollLabel = function () { return lang === 'hi' ? 'स्क्रॉल करने योग्य तालिका' : 'Scrollable table'; };
+  function scrollFocus() {
+    $$('.tscroll').forEach(function (e, i) {
+      if (!e.hasAttribute('tabindex')) { e.setAttribute('tabindex', '0'); e.setAttribute('role', 'region'); }
+      e.setAttribute('aria-label', scrollLabel() + ' ' + (i + 1));
+    });
+  }
+  scrollFocus(); listeners.push(scrollFocus);
+  if ('MutationObserver' in window) new MutationObserver(function () { scrollFocus(); }).observe(document.body, { childList: true, subtree: true });
+
   /* ---------- nav highlight ---------- */
   var links = $$('.nav a'), secs = links.map(function (a) { return $(a.getAttribute('href')); });
   if ('IntersectionObserver' in window) {
@@ -424,14 +561,16 @@
         sub.textContent = kb(r.size) + ' · ' + FT().added + ' ' + new Date(r.added).toLocaleString(lang === 'hi' ? 'hi-IN' : 'en-IN', { dateStyle: 'medium', timeStyle: 'short' }); info.appendChild(sub);
         li.appendChild(info);
         var act = document.createElement('div'); act.className = 'fact';
-        var b1 = document.createElement('button'); b1.type = 'button'; b1.className = 'btn ghost'; b1.textContent = r.kind === 'pdf' ? FT().preview : FT().check;
+        var b1 = document.createElement('button'); b1.type = 'button'; b1.className = 'btn ghost'; b1.textContent = r.kind === 'pdf' ? PT().analyse : FT().check;
         b1.addEventListener('click', function () { show(r); }); act.appendChild(b1);
         if (r.kind === 'pdf') {
+          var bp = document.createElement('button'); bp.type = 'button'; bp.className = 'btn ghost'; bp.textContent = FT().preview;
+          bp.addEventListener('click', function () { sel = r.id; renderList(); showPDF(r); }); act.appendChild(bp);
           var b2 = document.createElement('button'); b2.type = 'button'; b2.className = 'btn ghost'; b2.textContent = FT().open;
           b2.addEventListener('click', function () { window.open(URL.createObjectURL(r.blob), '_blank', 'noopener'); }); act.appendChild(b2);
         }
         var b3 = document.createElement('button'); b3.type = 'button'; b3.className = 'btn ghost danger'; b3.textContent = FT().remove;
-        b3.addEventListener('click', function () { mem = mem.filter(function (x) { return x.id !== r.id; }); delOne(r.id); if (sel === r.id) { sel = null; $('#csv-result').hidden = true; $('#pdf-prev').hidden = true; } renderList(); });
+        b3.addEventListener('click', function () { mem = mem.filter(function (x) { return x.id !== r.id; }); delOne(r.id); if (sel === r.id) { sel = null; $('#csv-result').hidden = true; $('#pdf-prev').hidden = true; $('#pdf-result').hidden = true; } renderList(); });
         act.appendChild(b3); li.appendChild(act); list.appendChild(li);
       });
     }
@@ -459,7 +598,7 @@
       return -1;
     };
     function checkCSV(rec) {
-      var box = $('#csv-result'); $('#pdf-prev').hidden = true; box.hidden = false; box.textContent = '';
+      var box = $('#csv-result'); $('#pdf-prev').hidden = true; $('#pdf-result').hidden = true; box.hidden = false; box.textContent = '';
       rec.blob.text().then(function (text) {
         var rows = parseCSV(text), head = (rows[0] || []).map(function (h) { return h.trim().toLowerCase(); });
         var ix = function (n) { return head.indexOf(n); };
@@ -499,11 +638,235 @@
       }).catch(function () { var e = document.createElement('div'); e.className = 'state err'; e.setAttribute('role', 'alert'); e.innerHTML = '<b></b>'; e.firstChild.textContent = FT().csvErr; box.appendChild(e); });
     }
     function showPDF(rec) {
-      var box = $('#pdf-prev'); $('#csv-result').hidden = true; box.hidden = false; box.textContent = '';
+      var box = $('#pdf-prev'); $('#csv-result').hidden = true; $('#pdf-result').hidden = true; box.hidden = false; box.textContent = '';
       var h3 = document.createElement('h3'); h3.textContent = rec.name; box.appendChild(h3);
       var f = document.createElement('iframe'); f.title = rec.name; f.src = URL.createObjectURL(rec.blob); box.appendChild(f);
     }
-    function show(rec) { sel = rec.id; renderList(); if (rec.kind === 'pdf') showPDF(rec); else checkCSV(rec); }
+
+    /* ---------- PDF analysis (pdf.js runs here in the browser; nothing is uploaded) ---------- */
+    var PS = {
+      en: { analyse: 'Analyse', reading: 'Reading page', of: 'of', cancel: 'Stop', stopped: 'Stopped early: only the pages read so far are analysed.',
+        loadLib: 'Starting the PDF reader…', pass: 'This PDF is password protected, so it cannot be read.', badpdf: 'This file could not be read as a PDF.', generic: 'The PDF could not be analysed.',
+        noText: 'This PDF has no readable text (it looks like a scan). Scanned images need OCR, which is not available here.',
+        noTables: 'No immersion water-quality tables were found.', noTablesHelp: 'This reader looks for MPPCB-style tables with Pre Immersion, During Immersion and After one week columns, then reads pH, dissolved oxygen and BOD.',
+        pages: 'pages read', tables: 'tables found', rowsRead: 'readings rows', needCheck: 'rows to check', clear: 'Clear', partial: 'Partial', check: 'Check page',
+        howRead: 'How reliable are these numbers?', howReadText: 'Each row is read from the position of its numbers under the Pre, During and After columns. “Clear” means all values were found in their columns and are physically plausible. “Partial” means a value is missing from the row. “Check page” means something looked wrong, such as an impossible value or stray text, so open the PDF page. A table whose ghat name is not in the PDF text is listed as “name not readable” and is never assigned to a ghat.',
+        compare: 'Against the dashboard data', cmpMatch: 'readings match the dashboard', cmpDiff: 'differ from the dashboard', cmpNew: 'are not in the dashboard',
+        highlights: 'Highlights', outsideBy: 'Outside the Class B limit', lowestDO: 'Lowest DO', highestBOD: 'Highest BOD', zeros: 'DO readings of 0', none: 'none',
+        scopeNote: 'Highlights use readings marked Clear or Partial for the seven ghats in this report; if none were found they use every site in the file.',
+        scope: 'Show', all: 'All sites', seven: 'The 7 ghats', other: 'Other sites', onlyOut: 'Only outside the limit', onlyCheck: 'Only rows to check', search: 'Search site',
+        site: 'Site', when: 'When', page: 'Page', test: 'Test', before: 'Before', during: 'During', after: 'After', quality: 'Reading',
+        unreadable: 'Name not readable', otherSite: 'Other site', showing: 'Showing', rows: 'rows', more: 'Show 40 more', download: 'Download extracted CSV', empty: 'No rows match these filters.', reset: 'Reset filters',
+        outside: 'outside the limit', notSampled: 'not sampled', verify: 'Always confirm a value against the PDF page before acting on it.', year: 'Year', fest: 'Festival', unknownWhen: 'Year not read' },
+      hi: { analyse: 'विश्लेषण करें', reading: 'पृष्ठ पढ़ा जा रहा है', of: 'में से', cancel: 'रोकें', stopped: 'बीच में रोका गया: अब तक पढ़े गए पृष्ठों का ही विश्लेषण हुआ।',
+        loadLib: 'PDF रीडर शुरू हो रहा है…', pass: 'यह PDF पासवर्ड से सुरक्षित है, इसलिए पढ़ा नहीं जा सकता।', badpdf: 'यह फ़ाइल PDF के रूप में पढ़ी नहीं जा सकी।', generic: 'PDF का विश्लेषण नहीं हो सका।',
+        noText: 'इस PDF में पढ़ने लायक पाठ नहीं है (यह स्कैन जैसा लगता है)। स्कैन की गई छवियों के लिए OCR चाहिए, जो यहाँ उपलब्ध नहीं है।',
+        noTables: 'विसर्जन के पानी की गुणवत्ता की कोई तालिका नहीं मिली।', noTablesHelp: 'यह रीडर विसर्जन से पहले, विसर्जन के दौरान और एक सप्ताह बाद के कॉलम वाली MPPCB शैली की तालिकाएँ खोजता है, फिर pH, घुलित ऑक्सीजन और BOD पढ़ता है।',
+        pages: 'पृष्ठ पढ़े गए', tables: 'तालिकाएँ मिलीं', rowsRead: 'रीडिंग पंक्तियाँ', needCheck: 'जाँचने योग्य पंक्तियाँ', clear: 'स्पष्ट', partial: 'अधूरी', check: 'पृष्ठ जाँचें',
+        howRead: 'ये आँकड़े कितने भरोसेमंद हैं?', howReadText: 'हर पंक्ति पहले, दौरान और बाद के कॉलम के नीचे अंकों की स्थिति देखकर पढ़ी जाती है। “स्पष्ट” का मतलब है कि सभी मान अपने कॉलम में मिले और संभव सीमा में हैं। “अधूरी” का मतलब है कि पंक्ति में कोई मान नहीं मिला। “पृष्ठ जाँचें” का मतलब है कि कुछ गड़बड़ दिखी, जैसे असंभव मान या बेमेल पाठ, इसलिए PDF का पृष्ठ खोलें। जिस तालिका का घाट-नाम PDF के पाठ में नहीं है, उसे “नाम पढ़ा नहीं जा सका” दिखाया जाता है और किसी घाट से नहीं जोड़ा जाता।',
+        compare: 'डैशबोर्ड के आँकड़ों से मिलान', cmpMatch: 'रीडिंग डैशबोर्ड से मेल खाती हैं', cmpDiff: 'डैशबोर्ड से अलग हैं', cmpNew: 'डैशबोर्ड में नहीं हैं',
+        highlights: 'मुख्य बातें', outsideBy: 'क्लास B सीमा से बाहर', lowestDO: 'सबसे कम DO', highestBOD: 'सबसे अधिक BOD', zeros: 'DO रीडिंग 0', none: 'कोई नहीं',
+        scopeNote: 'मुख्य बातें इस रिपोर्ट के सात घाटों की “स्पष्ट” या “अधूरी” रीडिंग से बनी हैं; यदि कोई नहीं मिली तो फ़ाइल के सभी स्थान लिए गए हैं।',
+        scope: 'दिखाएँ', all: 'सभी स्थान', seven: 'ये 7 घाट', other: 'अन्य स्थान', onlyOut: 'केवल सीमा से बाहर', onlyCheck: 'केवल जाँचने योग्य पंक्तियाँ', search: 'स्थान खोजें',
+        site: 'स्थान', when: 'कब', page: 'पृष्ठ', test: 'जाँच', before: 'पहले', during: 'दौरान', after: 'बाद', quality: 'रीडिंग',
+        unreadable: 'नाम पढ़ा नहीं जा सका', otherSite: 'अन्य स्थान', showing: 'दिख रहे', rows: 'पंक्तियाँ', more: '40 और दिखाएँ', download: 'निकाली गई CSV डाउनलोड करें', empty: 'इन फ़िल्टर से कोई पंक्ति नहीं मिली।', reset: 'फ़िल्टर रीसेट करें',
+        outside: 'सीमा से बाहर', notSampled: 'नमूना नहीं', verify: 'किसी भी मान पर कार्रवाई से पहले PDF के पृष्ठ से उसकी पुष्टि करें।', year: 'वर्ष', fest: 'पर्व', unknownWhen: 'वर्ष नहीं पढ़ा' }
+    };
+    var PT = function () { return PS[lang]; };
+    var pdfReady = null;
+    function loadPdfJs() {
+      if (pdfReady) return pdfReady;
+      pdfReady = new Promise(function (res, rej) {
+        try {
+          var get = function () { return window.pdfjsLib || window['pdfjs-dist/build/pdf']; };
+          if (!get()) { var s = document.createElement('script'); s.textContent = $('#pdfjs-lib').textContent; document.head.appendChild(s); }
+          var lib = get(); if (!lib) throw new Error('pdf.js did not start');
+          lib.GlobalWorkerOptions.workerSrc = URL.createObjectURL(new Blob([$('#pdfjs-worker').textContent], { type: 'text/javascript' }));
+          res(lib);
+        } catch (e) { pdfReady = null; rej(e); }
+      });
+      return pdfReady;
+    }
+    var dashMap = null;
+    function dashLookup() {
+      if (dashMap) return dashMap; dashMap = {};
+      DATA.rows.forEach(function (r) { dashMap[r.s + '|' + r.y + '|' + r.f + '|' + r.p + '|' + r.k] = r.v; });
+      return dashMap;
+    }
+    var nameYear = function (n) { var m = n.match(/(20\d\d)/g); return m && m.length === 1 ? +m[0] : null; };
+    var FPHASE = ['pre', 'during', 'after'];
+
+    function analysePDF(rec) {
+      sel = rec.id; renderList();
+      $('#csv-result').hidden = true; $('#pdf-prev').hidden = true;
+      var box = $('#pdf-result'); box.hidden = false; box.textContent = '';
+      box.appendChild(E('h3', '', rec.name));
+      var status = E('p', 'muted small', PT().loadLib); status.setAttribute('role', 'status'); box.appendChild(status);
+      var bar = E('div', 'progress'); var fill = E('i'); bar.appendChild(fill); bar.setAttribute('role', 'progressbar'); bar.setAttribute('aria-valuemin', '0'); bar.setAttribute('aria-valuemax', '100'); box.appendChild(bar);
+      var stop = E('button', 'btn ghost', PT().cancel); stop.type = 'button'; var stopped = false; stop.addEventListener('click', function () { stopped = true; }); box.appendChild(stop);
+      var fail = function (key) { box.textContent = ''; box.appendChild(E('h3', '', rec.name)); var e = E('div', 'state err'); e.setAttribute('role', 'alert'); e.appendChild(E('b', '', PT()[key] || PT().generic)); box.appendChild(e); };
+      loadPdfJs().then(function (lib) {
+        return rec.blob.arrayBuffer().then(function (buf) { return lib.getDocument({ data: new Uint8Array(buf), verbosity: 0 }).promise; });
+      }).then(function (doc) {
+        var parser = GWPdf.createParser({ aliases: DATA.aliases, year: nameYear(rec.name) });
+        var n = 1;
+        var step = function () {
+          if (stopped || n > doc.numPages) return Promise.resolve();
+          return doc.getPage(n).then(function (page) {
+            return page.getTextContent().then(function (tc) {
+              parser.addPage(tc.items.map(function (i) { return { str: i.str, x: i.transform[4], y: i.transform[5], w: i.width }; }), n);
+              page.cleanup();
+            });
+          }).then(function () {
+            var pct = Math.round(n / doc.numPages * 100); fill.style.width = pct + '%'; bar.setAttribute('aria-valuenow', String(pct));
+            status.textContent = PT().reading + ' ' + n + ' ' + PT().of + ' ' + doc.numPages; n++;
+            return new Promise(function (r) { setTimeout(r, 0); }).then(step);
+          });
+        };
+        return step().then(function () { var res = parser.result(); res.total = doc.numPages; res.stopped = stopped; return res; });
+      }).then(function (res) {
+        if (sel !== rec.id) return;
+        renderAnalysis(box, rec, res);
+      }).catch(function (e) {
+        if (window.console) console.error(e);
+        var nm = e && e.name;
+        fail(nm === 'PasswordException' ? 'pass' : (nm === 'InvalidPDFException' || nm === 'MissingPDFException' || nm === 'FormatError') ? 'badpdf' : 'generic');
+      });
+    }
+
+    function renderAnalysis(box, rec, res) {
+      box.textContent = '';
+      box.appendChild(E('h3', '', rec.name));
+      if (res.pagesWithText === 0) { var e1 = E('div', 'state err'); e1.setAttribute('role', 'alert'); e1.appendChild(E('b', '', PT().noText)); box.appendChild(e1); return; }
+      if (!res.rows.length && res.stopped) { box.appendChild(E('p', 'note', PT().stopped)); return; }
+      if (!res.rows.length) { var e2 = E('div', 'state panel'); e2.appendChild(E('b', '', PT().noTables)); e2.appendChild(E('span', '', PT().noTablesHelp)); box.appendChild(e2); return; }
+      var rows = res.rows.map(function (r) {
+        var L = DATA.limits[r.param], cells = FPHASE.map(function (p) {
+          var c = r.cells[p], out = null;
+          if (c.state === 'num' && r.conf !== 'check') out = outsideLimit(L, c.v);
+          return { raw: c.raw, v: c.v, state: c.state, out: out, p: p };
+        });
+        var ghat = r.site, label = ghat > -1 ? (lang === 'hi' ? DATA.sites[ghat].hi : DATA.sites[ghat].en) : (r.siteText || '');
+        return { r: r, cells: cells, ghat: ghat, label: label, param: r.param, unit: L.unit };
+      });
+      var counts = { clear: 0, partial: 0, check: 0 }, tablesSet = {};
+      rows.forEach(function (x) { counts[x.r.conf]++; tablesSet[x.r.table] = 1; });
+      var sum = E('ul', 'sev-summary');
+      [[res.total, PT().pages], [Object.keys(tablesSet).length, PT().tables], [rows.length, PT().rowsRead], [counts.check, PT().needCheck]].forEach(function (p) {
+        var li = E('li'); li.appendChild(E('b', '', String(p[0]))); li.appendChild(E('span', 'muted', p[1])); sum.appendChild(li);
+      });
+      box.appendChild(sum);
+      if (res.stopped) box.appendChild(E('p', 'note', PT().stopped));
+      var det = E('details'); det.appendChild(E('summary', '', PT().howRead)); det.appendChild(E('p', 'muted small', PT().howReadText)); box.appendChild(det);
+
+      // against the dashboard data
+      var map = dashLookup(), cm = { match: 0, diff: 0, nw: 0 };
+      rows.forEach(function (x) {
+        if (x.ghat < 0 || !x.r.year || !x.r.festival || x.r.conf === 'check') return;
+        x.cells.forEach(function (c) {
+          if (c.state !== 'num') return;
+          var d = map[x.ghat + '|' + x.r.year + '|' + x.r.festival + '|' + c.p + '|' + x.param];
+          if (d === undefined) cm.nw++; else if (d === c.v) cm.match++; else cm.diff++;
+        });
+      });
+      if (cm.match + cm.diff + cm.nw) {
+        var cb = E('div', 'cmp-line'); cb.appendChild(E('b', '', PT().compare + ': '));
+        cb.appendChild(document.createTextNode(cm.match + ' ' + PT().cmpMatch + ' \u00b7 ' + cm.diff + ' ' + PT().cmpDiff + ' \u00b7 ' + cm.nw + ' ' + PT().cmpNew + '.')); box.appendChild(cb);
+      }
+
+      // highlights
+      var seven = rows.filter(function (x) { return x.ghat > -1 && x.r.conf !== 'check'; });
+      var pool = seven.length ? seven : rows.filter(function (x) { return x.r.conf !== 'check'; });
+      var nums = function (param) { var a = []; pool.forEach(function (x) { if (x.param === param) x.cells.forEach(function (c) { if (c.state === 'num') a.push({ v: c.v, x: x, c: c }); }); }); return a; };
+      var whereOf = function (o) { return o.x.label + ', ' + (o.x.r.year || '?') + ' ' + (o.x.r.festival ? fest(o.x.r.festival) : '?') + ', ' + S().phaseLong[o.c.p] + ', p.' + o.x.r.page; };
+      var hl = E('div', 'hl-box'); hl.appendChild(E('h4', '', PT().highlights));
+      var ul = E('ul', 'hl-list');
+      var outTxt = ['DO', 'BOD', 'pH'].map(function (P) { var a = nums(P); return P + ' ' + a.filter(function (o) { return outsideLimit(DATA.limits[P], o.v); }).length + '/' + a.length; }).join(' \u00b7 ');
+      ul.appendChild(E('li', '', PT().outsideBy + ': ' + outTxt));
+      var doN = nums('DO'), bodN = nums('BOD');
+      if (doN.length) { var lo = doN.reduce(function (a, b) { return b.v < a.v ? b : a; }); ul.appendChild(E('li', '', PT().lowestDO + ': ' + fmtN(lo.v) + ' mg/l \u2013 ' + whereOf(lo))); }
+      if (bodN.length) { var hi = bodN.reduce(function (a, b) { return b.v > a.v ? b : a; }); ul.appendChild(E('li', '', PT().highestBOD + ': ' + fmtN(hi.v) + ' mg/l \u2013 ' + whereOf(hi))); }
+      ul.appendChild(E('li', '', PT().zeros + ': ' + (doN.filter(function (o) { return o.v === 0; }).length || PT().none)));
+      hl.appendChild(ul); hl.appendChild(E('p', 'muted small', PT().scopeNote)); box.appendChild(hl);
+
+      // filters + table
+      var f = { scope: 'all', out: false, chk: false, q: '' }, limit = 40;
+      var ctl = E('div', 'controls');
+      var fld = function (label, node) { var d = E('div', 'field'); d.appendChild(E('span', 'fl', label)); d.appendChild(node); return d; };
+      var sg = E('div', 'seg'); sg.setAttribute('role', 'group'); sg.setAttribute('aria-label', PT().scope);
+      [['all', PT().all], ['seven', PT().seven], ['other', PT().other]].forEach(function (o) {
+        var b = E('button', '', o[1]); b.type = 'button'; b.setAttribute('aria-pressed', String(o[0] === 'all'));
+        b.addEventListener('click', function () { f.scope = o[0]; $$('button', sg).forEach(function (x) { x.setAttribute('aria-pressed', String(x === b)); }); limit = 40; draw(); }); sg.appendChild(b);
+      });
+      ctl.appendChild(fld(PT().scope, sg));
+      var q = E('input'); q.type = 'search'; q.setAttribute('aria-label', PT().search); q.placeholder = PT().search; q.addEventListener('input', function () { f.q = q.value.toLowerCase(); limit = 40; draw(); });
+      ctl.appendChild(fld(PT().search, q));
+      var tog = function (key, text) {
+        var b = E('button', 'btn ghost', text); b.type = 'button'; b.setAttribute('aria-pressed', 'false');
+        b.addEventListener('click', function () { f[key] = !f[key]; b.setAttribute('aria-pressed', String(f[key])); b.classList.toggle('on', f[key]); limit = 40; draw(); }); return b;
+      };
+      var tw = E('div', 'field'); tw.appendChild(E('span', 'fl', '\u00a0')); var tr = E('div', 'toggles'); tr.appendChild(tog('out', PT().onlyOut)); tr.appendChild(tog('chk', PT().onlyCheck)); tw.appendChild(tr); ctl.appendChild(tw);
+      box.appendChild(ctl);
+      var count = E('p', 'inc-count'); count.setAttribute('role', 'status'); count.setAttribute('aria-live', 'polite'); box.appendChild(count);
+      var holder = E('div'); box.appendChild(holder);
+      var moreWrap = E('div', 'inc-more'); var moreBtn = E('button', 'btn ghost', PT().more); moreBtn.type = 'button'; moreBtn.addEventListener('click', function () { limit += 40; draw(); }); moreWrap.appendChild(moreBtn); box.appendChild(moreWrap);
+      var actions = E('div', 'pdf-actions'); var dl = E('button', 'btn', PT().download); dl.type = 'button'; actions.appendChild(dl); box.appendChild(actions);
+      box.appendChild(E('p', 'muted small', PT().verify));
+
+      function qualityTag(c) { var t = E('span', 'tag ' + (c === 'clear' ? 'tag-ok' : c === 'partial' ? 'tag-warn' : 'tag-bad'), PT()[c]); return t; }
+      function cell(c) {
+        var td = E('td', 'num');
+        if (c.state === 'blank') { td.appendChild(E('span', 'muted', '\u2013')); return td; }
+        if (c.state === 'missing' || c.state === 'low') { td.appendChild(E('span', 'muted', c.raw)); return td; }
+        var sp = E('span', c.out ? 'val out' : 'val', fmtN(c.v)); td.appendChild(sp);
+        if (c.out) td.appendChild(E('span', 'sr', ' ' + PT().outside));
+        return td;
+      }
+      function draw() {
+        var shown = rows.filter(function (x) {
+          if (f.scope === 'seven' && x.ghat < 0) return false;
+          if (f.scope === 'other' && x.ghat > -1) return false;
+          if (f.out && !x.cells.some(function (c) { return c.out; })) return false;
+          if (f.chk && x.r.conf === 'clear') return false;
+          if (f.q && (x.label + ' ' + x.r.siteText).toLowerCase().indexOf(f.q) < 0) return false;
+          return true;
+        });
+        holder.textContent = '';
+        var vis = shown.slice(0, limit);
+        count.textContent = PT().showing + ' ' + vis.length + ' ' + PT().of + ' ' + shown.length + ' ' + PT().rows;
+        moreWrap.hidden = vis.length >= shown.length;
+        if (!shown.length) { var st = E('div', 'state panel'); st.appendChild(E('b', '', PT().empty)); holder.appendChild(st); return; }
+        var wrap = E('div', 'tscroll'), t = document.createElement('table');
+        var th = E('tr'); [PT().site, PT().when, PT().page, PT().test, PT().before, PT().during, PT().after, PT().quality].forEach(function (h) { th.appendChild(E('th', '', h)); });
+        var thead = E('thead'); thead.appendChild(th); t.appendChild(thead);
+        var tb = E('tbody');
+        vis.forEach(function (x) {
+          var tr = E('tr'); var td = E('td'); td.appendChild(E('strong', '', x.label || PT().unreadable));
+          if (x.ghat < 0) td.appendChild(E('div', 'muted small', x.label ? PT().otherSite : '')); tr.appendChild(td);
+          tr.appendChild(E('td', '', x.r.year ? x.r.year + ' ' + (x.r.festival ? fest(x.r.festival) : '') : PT().unknownWhen));
+          tr.appendChild(E('td', 'num', 'p.' + x.r.page));
+          tr.appendChild(E('td', '', x.param + (x.unit ? ' (' + x.unit + ')' : '')));
+          x.cells.forEach(function (c) { tr.appendChild(cell(c)); });
+          var q = E('td'); q.appendChild(qualityTag(x.r.conf)); tr.appendChild(q);
+          tb.appendChild(tr);
+        });
+        t.appendChild(tb); wrap.appendChild(t); holder.appendChild(wrap);
+      }
+      dl.addEventListener('click', function () {
+        var esc = function (s) { s = String(s === null || s === undefined ? '' : s); return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; };
+        var out = ['source_file,page,year,festival,site_in_pdf,matched_ghat,parameter,phase,value_as_printed,outside_class_b_limit,row_quality'];
+        rows.forEach(function (x) {
+          x.cells.forEach(function (c) {
+            out.push([rec.name, x.r.page, x.r.year || '', x.r.festival || '', x.r.siteText, x.ghat > -1 ? DATA.sites[x.ghat].en : '', x.param, c.p, c.raw, c.out === null ? '' : (c.out ? 'yes' : 'no'), x.r.conf].map(esc).join(','));
+          });
+        });
+        var a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([out.join('\r\n') + '\r\n'], { type: 'text/csv' })); a.download = rec.name.replace(/\.pdf$/i, '') + '_extracted.csv'; a.click();
+      });
+      draw();
+      listeners.push(function () { if (sel === rec.id && !box.hidden) renderAnalysis(box, rec, res); });
+    }
+    var outsideLimit = function (L, v) { return L.kind === 'min' ? v < L.low : L.kind === 'max' ? v > L.high : (v < L.low || v > L.high); };
+    function show(rec) { sel = rec.id; renderList(); if (rec.kind === 'pdf') analysePDF(rec); else { $('#pdf-result').hidden = true; checkCSV(rec); } }
 
     function addFiles(files) {
       msg.textContent = '';

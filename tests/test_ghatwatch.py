@@ -209,5 +209,90 @@ class TestBrief(unittest.TestCase):
             self.assertNotIn(w, low)
 
 
+class TestActionsAndCompare(unittest.TestCase):
+    """Suggested checks rest on counted readings; compare data is the same data the ranking uses."""
+
+    def setUp(self):
+        from ghatwatch.actions import suggested_actions
+        from ghatwatch.render import ghat_data
+        self.acts = {g.site: suggested_actions(g, READINGS, LIMITS) for g in RESULTS}
+        self.data = {g.site: ghat_data(g) for g in RESULTS}
+
+    def test_every_action_is_complete_and_bilingual(self):
+        for site, acts in self.acts.items():
+            self.assertTrue(acts)
+            for a in acts:
+                for k in ("code", "en", "hi", "why_en", "why_hi"):
+                    self.assertTrue(a[k].strip(), (site, a["code"], k))
+
+    def test_bairagarh_rules_follow_its_numbers(self):
+        codes = {a["code"] for a in self.acts["Bairagarh (Sant Hirdaram) kund"]}
+        self.assertIn("do_zero", codes)      # four DO readings of 0
+        self.assertIn("gap", codes)          # missing readings
+        why = next(a for a in self.acts["Bairagarh (Sant Hirdaram) kund"] if a["code"] == "do_zero")["why_en"]
+        self.assertIn("4 of 13", why)
+
+    def test_zero_rule_only_where_there_is_a_zero(self):
+        for g in RESULTS:
+            has_zero = any(v == 0 for v in g.stats[DO].values)
+            self.assertEqual(has_zero, any(a["code"] == "do_zero" for a in self.acts[g.site]), g.site)
+
+    def test_medium_confidence_site_gets_a_confirm_step(self):
+        for g in RESULTS:
+            self.assertEqual(g.confidence == "medium", any(a["code"] == "site" for a in self.acts[g.site]), g.site)
+
+    def test_no_causal_or_health_claims_in_actions(self):
+        for acts in self.acts.values():
+            for a in acts:
+                low = (a["en"] + a["why_en"]).lower()
+                for w in ("caused", "because of immersion", "toxic", "unsafe", "disease", "illness", "danger"):
+                    self.assertNotIn(w, low)
+
+    def test_compare_part_scores_average_to_the_risk_score(self):
+        for g in RESULTS:
+            d = self.data[g.site]
+            avg = sum(p["part"] for p in d["parts"].values()) / 3
+            self.assertAlmostEqual(avg, g.score, delta=0.1)
+            self.assertEqual((d["rank"], d["score"]), (g.rank, round(g.score, 1)))
+            for p in d["parts"].values():
+                self.assertLessEqual(p["breaches"], p["measured"])
+
+
+class TestPdfReaderWiring(unittest.TestCase):
+    """The PDF reader runs in the browser; these check it is bundled and wired to the seven ghats."""
+
+    @classmethod
+    def setUpClass(cls):
+        from ghatwatch.render import SITE_ALIASES, render
+        from ghatwatch.scoring import headline, sensitivity_summary
+        cls.aliases = SITE_ALIASES
+        h, sens = headline(READINGS, LIMITS), sensitivity_summary(RESULTS)
+        en, hi = build_brief(READINGS, LIMITS, RESULTS)
+        cls.page = render(READINGS, LIMITS, RESULTS, h, sens, en, hi)
+
+    def test_every_ghat_has_name_keywords(self):
+        self.assertEqual(set(self.aliases), {g.site for g in RESULTS})
+        for keys in self.aliases.values():
+            self.assertTrue(keys and all(k == k.lower() and len(k) > 4 for k in keys))
+
+    def test_keywords_do_not_overlap_between_ghats(self):
+        seen = {}
+        for site, keys in self.aliases.items():
+            for k in keys:
+                for other, okeys in self.aliases.items():
+                    if other != site:
+                        self.assertFalse(any(k in o or o in k for o in okeys), (site, k, other))
+
+    def test_reader_is_bundled_not_loaded_from_the_internet(self):
+        for marker in ('id="pdfjs-lib"', 'id="pdfjs-worker"', "GWPdf"):
+            self.assertIn(marker, self.page)
+        self.assertNotIn('src="http', self.page)
+        self.assertNotIn("cdn.", self.page.split("<body>")[1])
+
+    def test_aliases_are_embedded_in_page_data(self):
+        self.assertIn('"aliases"', self.page)
+        self.assertIn("khatlapura", self.page)
+
+
 if __name__ == "__main__":
     unittest.main()

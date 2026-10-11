@@ -27,6 +27,19 @@ The **Bhopal Municipal Corporation officer who plans Durga visarjan** (20 Octobe
 
 `python run.py` also writes the report to `docs/index.html`. In the repository go to **Settings > Pages**, choose **Deploy from a branch**, branch `main`, folder `/docs`, and save. The site is then at `https://<user>.github.io/<repo>/`. Re-run `python run.py` and push to update it.
 
+## Features added for officers
+
+- **Download PDF** (Brief section): prints only the brief, on one A4 page, in the language currently selected. Use the browser's *Save as PDF* destination.
+- **Compare ghats**: pick two or three ghats and see DO, BOD and pH side by side (breach share, worst reading with page, part score), plus a plain-words line on where the scores differ. All numbers are the ones the ranking uses.
+- **Before / during / after** under each trend chart: the three readings per festival with the change between them. It reports changes between measured readings only and says it does not show cause.
+- **Suggested checks** on each ghat card (`ghatwatch/actions.py`): a tickable list drawn from that ghat's readings, each item citing the counts it rests on. These are the project's suggestions, not official rules; the single threshold (a parameter counts as "often outside the limit" at 50% or more of measured readings) is at the top of the file. Ticks stay in the browser.
+- **Files tab**: officers can add CSV and PDF files; they stay in the browser, are never uploaded, and never feed the ranking.
+  - **CSV**: validated, matched to the seven ghats and checked against the Class B limits.
+  - **PDF analysis**: the page bundles pdf.js (Apache-2.0, `ghatwatch/assets/vendor/`) and reads MPPCB-style immersion tables in the browser. `ghatwatch/assets/pdf_analysis.js` places each number under the *Pre / During / After* column by its position and extracts pH, DO and BOD per site, year and festival. Each row is **Clear** (all values in their columns and physically plausible), **Partial** (a value missing) or **Check page** (impossible value or stray text). A table whose ghat name is not in the PDF's text layer is listed as "name not readable" and never assigned to a ghat. The result shows highlights, a comparison with the dashboard data, filters, and a CSV export; scanned PDFs (no text layer) are refused with an explanation because OCR is not included.
+  - **Measured accuracy** (`node tools/check_pdf_reader.js PATH/TO/resources`, needs `npm install pdfjs-dist@3.11.174`): on the three original reports it recovers 103 of the 111 verified fully numeric DO/BOD/pH rows exactly, with 0 "clear" rows disagreeing with `data/bhopal_ghats_2023_2025.csv`. The other 8 are tables whose ghat name is not readable in the PDF. Uploading each full report in the browser matches 121 (2023), 118 (2024) and 95 (2025) readings to the dashboard data with 0 differences. Layouts other than these reports are untested; always confirm a value on the PDF page.
+
+Accessibility: automated WCAG 2.0/2.1 A/AA and best-practice audit with axe-core reports no violations on the dashboard (English and Hindi) or the Files tab at desktop and phone width; every control is reachable by keyboard; reduced-motion is respected; touch targets are 44 px. A screen-reader and real-phone pass has not been done.
+
 ## Outputs (`outputs/`)
 
 | File | What it is |

@@ -4,6 +4,7 @@ import html
 import json
 import os
 
+from .actions import suggested_actions
 from .brief import FEST_HI, NAME_HI, PHASE_SHORT_HI, SHORT_EN, SHORT_HI, WATER_HI, to_plain
 from .data import BDL_STATUS, BOD, DO, KEY_PARAMETERS, MEASURED, MISSING, ND_STATUS, PH, PHASES, fmt
 from .scoring import WEIGHTINGS, is_breach, severity
@@ -159,6 +160,7 @@ def ghat_card(g, readings, limits):
               f'<th>{t("Mean severity", "औसत गंभीरता")}</th><th>{t("Part score", "भाग स्कोर")}</th>'
               f'<th>{t("Worst reading", "सबसे ख़राब रीडिंग")}</th></tr>{"".join(params)}</table></div>')
     wb_hi = WATER_HI.get(g.water_body, g.water_body)
+    actions_html = actions_block(g, readings, limits)
     return f"""
 <article class="ghat" id="g{g.rank}">
   <div class="ghat-head">
@@ -176,6 +178,7 @@ def ghat_card(g, readings, limits):
   </div>
   <p class="reason">{t(esc(r_en), esc(r_hi))}</p>
   {note_html}
+  {actions_html}
   <details>
     <summary>{t('Evidence: every reading, with limit and report page', 'प्रमाण: हर रीडिंग, सीमा और रिपोर्ट पृष्ठ के साथ')}</summary>
     {ptable}
@@ -282,6 +285,43 @@ SEV_EN = {"critical": "Critical", "high": "High", "moderate": "Moderate"}
 PHASE_EN = {"pre": "before immersion", "during": "during immersion", "after": "one week after"}
 
 
+def ghat_data(g):
+    """Per-ghat numbers for the compare view: the same stats the ranking is built from."""
+    parts = {}
+    for p in KEY_PARAMETERS:
+        st = g.stats[p]
+        w = st.worst
+        parts[PKEY[p]] = {
+            "part": round(100 * st.score(), 1), "breaches": st.breaches, "measured": st.measured,
+            "missing": st.missing + st.absent,
+            "mean": round(sum(st.values) / len(st.values), 2) if st.values else None,
+            "worst": ({"v": w.value, "y": w.year, "f": w.festival, "p": w.phase, "pg": w.source_page} if w else None)}
+    return {"rank": g.rank, "score": round(g.score, 1), "lo": round(g.score_low, 1), "hi": round(g.score_high, 1), "parts": parts}
+
+
+def actions_block(g, readings, limits):
+    acts = suggested_actions(g, readings, limits)
+    items = "".join(
+        f'<li><label class="chk"><input type="checkbox" data-chk="{esc(g.site)}|{a["code"]}">'
+        f'<span><b>{t(esc(a["en"]), esc(a["hi"]))}</b>'
+        f'<small class="muted">{t(esc(a["why_en"]), esc(a["why_hi"]))}</small></span></label></li>' for a in acts)
+    return (f'<details class="actions"><summary>{t("Suggested checks before immersion", "विसर्जन से पहले सुझाई गई जाँचें")} '
+            f'<span class="cnt muted" data-total="{len(acts)}"></span></summary>'
+            f'<p class="muted small">{t("These are this project’s suggestions drawn from the readings, not official rules, and they do not say what caused a reading. Tick items as they are done; ticks stay in this browser only.", "ये इस परियोजना के सुझाव हैं जो रीडिंग से निकले हैं; ये आधिकारिक नियम नहीं हैं और न ही बताते हैं कि रीडिंग का कारण क्या था। काम होने पर टिक करें; टिक केवल इसी ब्राउज़र में रहते हैं।")}</p>'
+            f'<ul class="checklist">{items}</ul></details>')
+
+
+SITE_ALIASES = {  # words that identify each ghat in the MPPCB reports (matched case-insensitively)
+    "Khatlapura ghat": ["khatlapura"],
+    "Bairagarh (Sant Hirdaram) kund": ["hirdaram", "bairagarh"],
+    "Prempura ghat": ["prempura"],
+    "Rani Kamlapati ghat / Kamla Park kund": ["kamlapati", "kamla park"],
+    "Hathaikheda dam / kund": ["hathaikheda", "hathai kheda", "hatai"],
+    "Malikhedi kund": ["maalikhedi", "malikhedi", "mali khedi"],
+    "Shahpura lake ghat": ["shahpura"],
+}
+
+
 def files_section():
     cols = [("site", "required", "Ghat name", "घाट का नाम"), ("parameter", "required", "DO, BOD or pH", "DO, BOD या pH"),
             ("value", "required", "Number", "संख्या"), ("year", "optional", "e.g. 2026", "जैसे 2026"),
@@ -292,7 +332,7 @@ def files_section():
     return f"""<section id="files" class="view" aria-labelledby="h-files">
 <div class="wrap">
   <div class="sec-head"><div>
-    <h2 id="h-files">{t('Officer files', 'अधिकारी की फ़ाइलें')}</h2>
+    <h1 id="h-files">{t('Officer files', 'अधिकारी की फ़ाइलें')}</h1>
     <p>{t('Add PDF reports and CSV readings. Files stay in this browser only; nothing is uploaded anywhere. Added readings are checked against the Class B limits but are not part of the ranking.',
           'PDF रिपोर्ट और CSV रीडिंग जोड़ें। फ़ाइलें केवल इसी ब्राउज़र में रहती हैं; कहीं अपलोड नहीं होतीं। जोड़ी गई रीडिंग क्लास B सीमा से जाँची जाती हैं पर क्रम (रैंकिंग) में शामिल नहीं होतीं।')}</p>
   </div></div>
@@ -306,10 +346,11 @@ def files_section():
         <input type="file" id="file-in" multiple accept=".pdf,.csv,application/pdf,text/csv" hidden>
       </div>
       <p class="file-msg" id="file-msg" role="status" aria-live="polite"></p>
-      <div class="sec-sub"><h3>{t('Your files', 'आपकी फ़ाइलें')}</h3></div>
+      <div class="sec-sub"><h2>{t('Your files', 'आपकी फ़ाइलें')}</h2></div>
       <ul class="files" id="file-list"></ul>
       <div class="state panel" id="file-empty"><b>{t('No files added yet', 'अभी कोई फ़ाइल नहीं जोड़ी गई')}</b><span>{t('Drop a CSV of readings or a PDF report to start.', 'शुरू करने के लिए रीडिंग की CSV या PDF रिपोर्ट छोड़ें।')}</span></div>
       <div class="panel csv-result" id="csv-result" hidden></div>
+      <div class="panel pdf-result" id="pdf-result" hidden></div>
       <div class="panel pdf-prev" id="pdf-prev" hidden></div>
     </div>
     <aside class="status-panel">
@@ -396,7 +437,7 @@ def metric(fig, denom, label, frac, warn=False):
             f'<div class="fig">{fig}{f" <small>/ {denom}</small>" if denom else ""}</div></div>')
 
 
-NAV = [("overview", "Overview", "सारांश"), ("priority", "Priority", "प्राथमिकता"), ("trends", "Trends", "रुझान"),
+NAV = [("overview", "Overview", "सारांश"), ("priority", "Priority", "प्राथमिकता"), ("trends", "Trends", "रुझान"), ("compare", "Compare", "तुलना"),
        ("incidents", "Incidents", "घटनाएँ"), ("ghats", "Ghats", "घाट"), ("brief", "Brief", "सार"),
        ("method", "Method", "विधि"), ("files", "Files", "फ़ाइलें")]
 
@@ -430,6 +471,8 @@ def render(readings, limits, results, h, sens, brief_en, brief_hi):
                    for p in KEY_PARAMETERS},
         "sites": [{"en": SHORT_EN[g.site], "hi": SHORT_HI[g.site]} for g in results],
         "rows": [{k: v for k, v in x.items() if k != "_r"} for x in rows],
+        "ghats": [ghat_data(g) for g in results],
+        "aliases": [{"idx": i, "keys": SITE_ALIASES[g.site]} for i, g in enumerate(results)],
     }
     data_json = json.dumps(data, ensure_ascii=False, separators=(",", ":")).replace("</", "<\\/")
 
@@ -457,6 +500,7 @@ def render(readings, limits, results, h, sens, brief_en, brief_hi):
                h["missing_total"] / n_key, True),
     ])
     answer = answer_block(results, h, do_l)
+    cmp_chips = "".join(f'<button type="button" data-i="{i}" aria-pressed="{"true" if i < 3 else "false"}">{t(esc(SHORT_EN[g.site]), esc(SHORT_HI[g.site]))}</button>' for i, g in enumerate(results))
     pill_tip = esc("Historical MPPCB readings, 2023-2025. No live sensor feed is connected.")
     all_en, all_hi = t("All", "सभी"), t("Both", "दोनों")
 
@@ -557,7 +601,7 @@ def render(readings, limits, results, h, sens, brief_en, brief_hi):
       <div class="skeleton" aria-hidden="true"></div>
       <noscript><div class="state noscript-msg"><b>{t('Charts need JavaScript.', 'चार्ट के लिए JavaScript चाहिए।')}</b><span>{t('Every reading is in the incident list and the evidence tables below.', 'हर रीडिंग नीचे घटना सूची और प्रमाण तालिकाओं में है।')}</span></div></noscript>
       <div id="chart-svg-host"></div>
-      <div class="tip" id="chart-tip" role="tooltip"></div>
+      <div class="tip" id="chart-tip" aria-hidden="true"></div>
     </div>
     <ul class="legend" id="chart-legend">
       <li><svg width="14" height="14" aria-hidden="true"><circle cx="7" cy="7" r="5" fill="var(--teal)"/></svg>{t('Within limit', 'सीमा में')}</li>
@@ -569,8 +613,21 @@ def render(readings, limits, results, h, sens, brief_en, brief_hi):
       <p id="chart-unit-note"></p>
       <button type="button" class="btn ghost" id="view-table" aria-expanded="false" aria-controls="chart-table"><span class="l-en">View as table</span><span class="l-hi" lang="hi">तालिका देखें</span></button>
     </div>
+    <div class="phase-sum" id="phase-sum"></div>
     <div id="chart-table" hidden></div>
   </div>
+</section>
+
+<section id="compare" aria-labelledby="h-cmp">
+  <div class="sec-head"><div>
+    <h2 id="h-cmp">{t('Compare ghats', 'घाटों की तुलना')}</h2>
+    <p>{t('Pick two or three ghats to see dissolved oxygen, BOD and pH side by side. These are the same numbers the ranking is built from.',
+          'दो या तीन घाट चुनें और घुलित ऑक्सीजन, BOD और pH साथ-साथ देखें। ये वही आँकड़े हैं जिनसे क्रम बनता है।')}</p>
+  </div></div>
+  <div class="field"><span class="fl" id="cmp-label">{t('Ghats (up to 3)', 'घाट (अधिकतम 3)')}</span>
+    <div class="chips" id="cmp-chips" role="group" aria-labelledby="cmp-label">{cmp_chips}</div></div>
+  <p class="file-msg" id="cmp-msg" role="status" aria-live="polite"></p>
+  <div id="cmp-out" aria-live="polite"></div>
 </section>
 
 <section id="incidents" aria-labelledby="h-inc">
@@ -611,7 +668,8 @@ def render(readings, limits, results, h, sens, brief_en, brief_hi):
   <div class="panel brief">
     <div class="brief-bar">
       <span class="muted small">{t('Generated by code from the numbers above. No language model.', 'ऊपर के आँकड़ों से कोड द्वारा बना। कोई भाषा मॉडल नहीं।')}</span>
-      <button type="button" class="btn" id="copy">{t('Copy brief', 'सार कॉपी करें')}</button>
+      <span class="brief-btns"><button type="button" class="btn ghost" id="dl-pdf">{t('Download PDF', 'PDF डाउनलोड करें')}</button>
+      <button type="button" class="btn" id="copy">{t('Copy brief', 'सार कॉपी करें')}</button></span>
     </div>
     <div class="l-en">{md_to_html(brief_en)}</div>
     <div class="l-hi" lang="hi">{md_to_html(brief_hi)}</div>
@@ -644,8 +702,21 @@ def render(readings, limits, results, h, sens, brief_en, brief_hi):
 </div>
 {files_section()}
 </main>
+<div id="print-brief" aria-hidden="true">
+  <p class="pb-title">{t('Jal Nirikshak', 'जल निरीक्षक')}</p>
+  <p class="pb-sub">{t('Brief for the BMC officer planning Durga visarjan, 20 October 2026', 'दुर्गा विसर्जन (20 अक्टूबर 2026) की योजना बनाने वाले BMC अधिकारी के लिए सार')}</p>
+  <div class="l-en">{md_to_html(brief_en)}</div>
+  <div class="l-hi" lang="hi">{md_to_html(brief_hi)}</div>
+  <p class="pb-foot">{t('Source: MPPCB Ganesh and Durga visarjan reports 2023-2025; CPCB Class B screening yardstick. Historical data, not live and not a legal finding.', 'स्रोत: MPPCB गणेश और दुर्गा विसर्जन रिपोर्ट 2023-2025; CPCB क्लास B जाँच पैमाना। पुराना डेटा, लाइव नहीं और कानूनी निष्कर्ष नहीं।')}
+    <span id="pb-date"></span></p>
+</div>
 <script type="application/json" id="brief-text">{copy_text}</script>
 <script type="application/json" id="gw-data">{data_json}</script>
+<script type="text/plain" id="pdfjs-lib">{read_asset("vendor/pdf.min.js")}</script>
+<script type="text/plain" id="pdfjs-worker">{read_asset("vendor/pdf.worker.min.js")}</script>
+<script>
+{read_asset("pdf_analysis.js")}
+</script>
 <script>
 {read_asset("report.js")}
 </script>
