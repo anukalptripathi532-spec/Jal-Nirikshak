@@ -26,6 +26,28 @@
     return '';
   }
 
+  /* Monthly lake-monitoring tables (MPPCB "Water Quality during Year - 2023-24"): one row per test, one column per
+   * month April..March, then Av. / Maxi. / Mini.  Labels vary across years ("B.O.D", "D. Oxygen", "Dissolved"). */
+  var MONTHS = ['apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec', 'jan', 'feb', 'mar'];   // financial-year order
+  function monthOf(s) {
+    var m = (s || '').toLowerCase().match(/^(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\.?(\s*\(.*)?$/);
+    return m ? MONTHS.indexOf(m[1]) : -1;
+  }
+  function summaryOf(s) {
+    if (/^av(g|erage)?\.?$/i.test(s)) return 'avg';
+    if (/^max(i|imum)?\.?$/i.test(s)) return 'max';
+    if (/^min(i|imum)?\.?$/i.test(s)) return 'min';
+    return '';
+  }
+  function monthlyParamOf(label) {
+    var s = (label || '').replace(/^\s*\d+\s*/, '').trim().toLowerCase().replace(/\s*\.\s*/g, '.');
+    if (/solid|demand\s*\(c|chemical|c\.?\s*o\.?\s*d/.test(s)) return '';
+    if (/^p\.?\s*h\b/.test(s)) return 'pH';
+    if (/^b\.?\s*o\.?\s*d\b|biochemical\s*oxygen|bio-?\s*chemical\s*oxygen/.test(s)) return 'BOD';
+    if (/^d\.?\s*o\.?(\s|$)|^(d|dis|diss)\.?\s*oxygen|dissolved\s*oxygen|^dissolved(\s+mg|\s*$)/.test(s)) return 'DO';
+    return '';
+  }
+
   function toLines(items) {
     var its = items.filter(function (i) { return i.str && i.str.trim(); })
       .map(function (i) { return { s: i.str.trim(), x: i.x, y: i.y, w: i.w || 0 }; })
@@ -45,6 +67,101 @@
     var aliases = opts.aliases || [];                 // [{ idx, keys: ['khatlapura', ...] }]
     var st = { year: opts.year || null, festival: opts.festival || null, site: -1, siteText: '', fresh: false, done: true, cols: null, headerOnPage: false, table: 0 };
     var rows = [], pagesWithText = 0, tablesSeen = 0, pagesSeen = 0;
+    var ms = { cols: null, fy: null, fyLabel: '', water: '', station: '', table: 0 }, mrows = [];
+
+    // Text printed after "Label :" on the same line, without trailing ids such as "XGN ID: 22114" or "Cat - B".
+    function afterLabel(ln, re) {
+      var t = ln.text.replace(re, '').replace(/^\s*:?\s*/, '');
+      return t.replace(/\s*\|?\s*XGN\s*ID.*$/i, '').replace(/\s*\(?\s*code\s*\d+\s*\)?/i, '').replace(/[.\s]*Cat\.?\s*[-–]?\s*[A-E]\s*$/i, '').replace(/\s+\d{3,6}\s*$/, '').replace(/\s+/g, ' ').replace(/[.\s]+$/, '').trim();
+    }
+
+    // Month columns from the header; a month whose name was not readable is placed between its neighbours.
+    function buildCols(mx, sx) {
+      var known = Object.keys(mx).map(Number).sort(function (a, b) { return a - b; });
+      var steps = [];
+      for (var i = 1; i < known.length; i++) steps.push((mx[known[i]] - mx[known[i - 1]]) / (known[i] - known[i - 1]));
+      steps.sort(function (a, b) { return a - b; });
+      var step = steps[Math.floor(steps.length / 2)];
+      ms.spacing = step;
+      var cols = [];
+      for (var k = 0; k < 12; k++) {
+        var x = mx[k];
+        if (x === undefined) {
+          var lo = known.filter(function (m) { return m < k; }).pop(), hi = known.filter(function (m) { return m > k; })[0];
+          x = lo !== undefined && hi !== undefined ? mx[lo] + (mx[hi] - mx[lo]) * (k - lo) / (hi - lo)
+            : lo !== undefined ? mx[lo] + step * (k - lo) : mx[hi] - step * (hi - k);
+        }
+        cols.push({ m: k, x: x });
+      }
+      Object.keys(sx).forEach(function (s) { cols.push({ sum: s, x: sx[s] }); });
+      return cols;
+    }
+
+    function monthlyLine(ln, pageNo, lines, idx) {
+      var m;
+      if ((m = ln.text.match(/Water\s+Quality\s+during\s+(?:the\s+)?Year\s*[-–:]?\s*(20\d\d)\s*[-–]\s*(\d{2,4})/i))) {
+        ms.fy = +m[1]; ms.fyLabel = m[1] + '-' + m[2]; ms.cols = null; ms.water = ''; ms.station = ''; return true;
+      }
+      if (/^Natural\s+Water\s+Resource/i.test(ln.text)) { ms.water = afterLabel(ln, /^Natural\s+Water\s+Resource/i); return true; }
+      if (/^Description\s+of\s+Sampling\s+Station/i.test(ln.text)) { ms.station = afterLabel(ln, /^Description\s+of\s+Sampling\s+Station/i); return true; }
+
+      // header: six or more month names on one line, plus the Av. / Maxi. / Mini. columns
+      var mx = {}, sx = {};
+      var collect = function (items) {
+        items.forEach(function (it) {
+          var k = monthOf(it.s), sm = summaryOf(it.s);
+          if (k > -1 && mx[k] === undefined) mx[k] = it.x + it.w / 2;
+          else if (sm && sx[sm] === undefined) sx[sm] = it.x + it.w / 2;
+        });
+      };
+      collect(ln.items);
+      // Some years print only the sampled months; four names plus the Av. / Maxi. / Mini. columns still fix the grid.
+      if (Object.keys(mx).length >= 6 || (Object.keys(mx).length >= 4 && Object.keys(sx).length >= 2)) {
+        // Header cells sometimes sit a little above or below the rest of the header line.
+        for (var j = Math.max(0, idx - 2); j <= Math.min(lines.length - 1, idx + 2); j++) if (j !== idx && Math.abs(lines[j].y - ln.y) <= 14) collect(lines[j].items);
+        ms.cols = buildCols(mx, sx); ms.table++; return true;
+      }
+      if (!ms.cols) return false;
+
+      var monthCols = ms.cols.filter(function (c) { return c.sum === undefined; });
+      var gap = ms.spacing;
+      var leftLimit = monthCols[0].x - gap * 0.6;
+      var labelItems = ln.items.filter(function (i) { return i.x + i.w * 0.5 < leftLimit; });
+      var p = monthlyParamOf(labelItems.map(function (i) { return i.s; }).join(' '));
+      if (!p) return false;
+
+      var cells = {}, sums = {}, stray = 0;
+      ln.items.forEach(function (it) {
+        if (labelItems.indexOf(it) > -1) return;
+        it = { s: it.s.replace(/[`'’]+$/, ''), x: it.x, w: it.w };      // "3.8`" is a typing slip in one report
+        var c = it.x + it.w / 2, best = null, bd = 1e9;
+        ms.cols.forEach(function (col) { var d = Math.abs(c - col.x); if (d < bd) { bd = d; best = col; } });
+        if (!best || bd > gap * 0.5) { stray++; return; }
+        if (best.sum) { if (NUMBER.test(it.s)) sums[best.sum] = parseFloat(it.s); return; }
+        if (cells[best.m] !== undefined) { stray++; return; }
+        // Words with no digits ("NA", "Instrument disorder", "NR") are a note that no reading was taken.
+        if (!VALUE.test(it.s) && /\d/.test(it.s)) { stray++; cells[best.m] = { raw: it.s, v: null, state: 'missing' }; return; }
+        if (!VALUE.test(it.s)) { cells[best.m] = { raw: it.s, v: null, state: 'missing' }; return; }
+        if (NUMBER.test(it.s)) cells[best.m] = { raw: it.s, v: parseFloat(it.s), state: 'num' };
+        else cells[best.m] = { raw: it.s, v: null, state: /^bdl$|^nd$|^nil$/i.test(it.s) ? 'low' : 'missing' };
+      });
+      var vals = [], nums = [], implausible = false;
+      for (var k = 0; k < 12; k++) {
+        var cell = cells[k] || { raw: '', v: null, state: 'blank' };
+        if (cell.state === 'num') { nums.push(cell.v); if (cell.v < RANGE[p][0] || cell.v > RANGE[p][1]) implausible = true; }
+        cell.month = k; cell.year = ms.fy ? ms.fy + (k >= 9 ? 1 : 0) : null;
+        vals.push(cell);
+      }
+      if (!nums.length && !stray) return true;                   // a row with no readings at all
+      // The report prints its own Maxi. / Mini.; if ours disagree, a value was probably put in the wrong month.
+      var near = function (a, b) { return Math.abs(a - b) <= Math.max(0.051, Math.abs(b) * 0.01); };
+      var sumOk = nums.length && (sums.max === undefined || near(Math.max.apply(null, nums), sums.max)) &&
+        (sums.min === undefined || near(Math.min.apply(null, nums), sums.min));
+      var conf = implausible || stray || !sumOk ? 'check' : 'clear';
+      mrows.push({ page: pageNo, param: p, station: ms.station || ms.water || '', water: ms.water, fy: ms.fy, fyLabel: ms.fyLabel,
+        table: ms.table, cells: vals, conf: conf, summaryChecked: sums.max !== undefined || sums.min !== undefined, line: ln.text });
+      return true;
+    }
 
     function matchSite(text) {
       var t = (text || '').toLowerCase();
@@ -66,8 +183,10 @@
       var lines = toLines(items);
       if (!lines.length) return;
       pagesWithText++;
-      lines.forEach(function (ln) {
+      lines.forEach(function (ln, idx) {
         var txt = ln.text, m;
+        // Monthly tables are read on their own; the immersion reader below never sees their rows (no Pre/During/After header).
+        if (!st.cols && monthlyLine(ln, pageNo, lines, idx)) return;
         if ((m = txt.match(/\b(Ganesha?|Durga)\b[^.]{0,20}Immersion/i))) st.festival = /durga/i.test(m[1]) ? 'Durga' : 'Ganesh';
         // Year only from the places the reports put it (never from prose such as "issued in the year 2010").
         ln.items.forEach(function (i) { var y = i.s.match(/^YEAR\s*[-:]?\s*(20\d\d)$/i); if (y) st.year = +y[1]; });
@@ -132,9 +251,9 @@
 
     return {
       addPage: addPage,
-      result: function () { return { rows: rows, pages: pagesSeen, pagesWithText: pagesWithText, tables: tablesSeen }; }
+      result: function () { return { rows: rows, monthly: mrows, pages: pagesSeen, pagesWithText: pagesWithText, tables: tablesSeen }; }
     };
   }
 
-  return { createParser: createParser, paramOf: paramOf };
+  return { createParser: createParser, paramOf: paramOf, monthlyParamOf: monthlyParamOf, MONTHS: MONTHS };
 });

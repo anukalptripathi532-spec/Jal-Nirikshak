@@ -1,6 +1,7 @@
 """Render outputs/report.html: one self-contained page, English / Hindi."""
 
 import html
+import re
 import json
 import os
 
@@ -18,7 +19,7 @@ PARAM_HI = {
 SHORT_PARAM = {"Dissolved oxygen": "DO"}
 SHORT_PARAM_HI = {"Dissolved oxygen": "DO"}
 WEIGHT_HI = {
-    "shipped": "चुना गया: आधा सीमा-पार दर, आधा गंभीरता", "breach_only": "केवल सीमा-पार दर",
+    "shipped": "सामान्य", "breach_only": "केवल सीमा-पार दर",
     "severity_only": "केवल गंभीरता", "do_only": "केवल DO", "bod_only": "केवल BOD",
     "do_double": "DO दोगुना",
 }
@@ -136,7 +137,13 @@ def ghat_card(g, readings, limits):
     rank_rng = f"{g.rank_best}" if g.rank_best == g.rank_worst else f"{g.rank_best}-{g.rank_worst}"
     notes = []
     if g.confidence == "medium":
-        names = "; ".join(esc(n) for n in g.printed_names)
+        seen, uniq = set(), []
+        for n in g.printed_names:
+            k = re.sub(r"[^a-z]", "", n.lower().replace("bhopal", ""))
+            if k not in seen:
+                seen.add(k)
+                uniq.append(n)
+        names = "; ".join(esc(n) for n in uniq)
         notes.append(t(f"Site match confidence is medium. Ganesh tables say “Kamla Park kund”, Durga tables say "
                        f"“Lower Lake ghat”. They may be two places; kept as one site. Printed names: {names}.",
                        f"स्थान मिलान का भरोसा मध्यम है। गणेश तालिकाओं में “कमला पार्क कुंड”, दुर्गा तालिकाओं में "
@@ -167,7 +174,7 @@ def ghat_card(g, readings, limits):
     <div class="rank">{g.rank}</div>
     <div class="ghat-name">
       <h4>{t(esc(g.site), esc(NAME_HI[g.site]))}{' <span class="tag tag-warn">?</span>' if g.confidence == 'medium' else ''}</h4>
-      <div class="meta"><span class="chip">{t('Rank', 'रैंक')} {rank_rng}</span> <span class="chip chip-quiet">{t('Durga-only', 'केवल दुर्गा')} {g.durga_rank}</span> <span class="muted">{t(esc(g.water_body), esc(wb_hi))}</span></div>
+      <div class="meta"><span class="chip">{t('Rank', 'रैंक')} {rank_rng}</span> <span class="chip chip-quiet">{t('Durga rank', 'दुर्गा रैंक')} {g.durga_rank}</span> <span class="muted">{t(esc(g.water_body), esc(wb_hi))}</span></div>
       <div class="muted small">{g.measured} {t('of', 'में से')} {g.possible} {t('key readings measured', 'मुख्य रीडिंग मापी गईं')}</div>
     </div>
     <div class="score"><span class="big">{sc:.1f}</span><span class="muted small">{t('range', 'दायरा')} {lo:.1f}-{hi_:.1f}</span></div>
@@ -460,6 +467,9 @@ def render(readings, limits, results, h, sens, brief_en, brief_hi):
     sens_head = "".join(f"<th>{t(esc(w.label.split(':')[0]), esc(WEIGHT_HI[w.key]))}</th>" for w in WEIGHTINGS)
     copy_text = json.dumps({"en": to_plain(brief_en), "hi": to_plain(brief_hi)}, ensure_ascii=False).replace("</", "<\\/")
     do_l, bod_l, ph_l = limits[DO], limits[BOD], limits[PH]
+    zero_sites = sorted({r.site for r in h["do_zero"]})
+    zero_note_en = f" (all at {SHORT_EN[zero_sites[0]]})" if len(zero_sites) == 1 else ""
+    zero_note_hi = f" (सभी {SHORT_HI[zero_sites[0]]} में)" if len(zero_sites) == 1 else ""
     mid = f"{sens['middle_from']}-{sens['middle_to']}"
 
     rows = key_rows(readings, results, limits)
@@ -491,7 +501,7 @@ def render(readings, limits, results, h, sens, brief_en, brief_hi):
                t(f'<abbr title="Biochemical oxygen demand">BOD</abbr> readings above {fmt(bod_l.high)} mg/l',
                  f'<abbr title="जैव रासायनिक ऑक्सीजन माँग">BOD</abbr> रीडिंग {fmt(bod_l.high)} mg/l से अधिक'),
                h[BOD]["breaches"] / h[BOD]["measured"]),
-        metric(len(h["do_zero"]), total_do, t("DO readings of 0 (all at Bairagarh)", "DO रीडिंग 0 (सभी बैरागढ़ में)"),
+        metric(len(h["do_zero"]), total_do, t(f"DO readings of 0{zero_note_en}", f"DO रीडिंग 0{zero_note_hi}"),
                len(h["do_zero"]) / total_do),
         metric(h["do_pre_breaches"], h["do_pre_measured"],
                t("DO already below 5 before immersion", "विसर्जन से पहले ही DO 5 से कम"),
@@ -511,6 +521,10 @@ def render(readings, limits, results, h, sens, brief_en, brief_hi):
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Jal Nirikshak · Visarjan water-quality monitor, Bhopal</title>
 <meta name="description" content="Ranking of Bhopal's immersion ghats from 2023-2025 MPPCB water readings against CPCB Class B limits.">
+<meta property="og:title" content="Jal Nirikshak, Bhopal">
+<meta property="og:description" content="Which of Bhopal's immersion ghats to check first, from 2023-2025 MPPCB water readings.">
+<meta property="og:type" content="website">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='15' fill='%23ffd84d'/%3E%3Cpath d='M8 13c3-3 5 3 8 0s5 3 8 0M8 20c3-3 5 3 8 0s5 3 8 0' fill='none' stroke='%23232323' stroke-width='2.4' stroke-linecap='round'/%3E%3C/svg%3E">
 <script>document.documentElement.className+=" js";</script>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500&display=swap">
@@ -558,25 +572,25 @@ def render(readings, limits, results, h, sens, brief_en, brief_hi):
 
 <div class="wrap">
 <section id="priority" aria-labelledby="h-pri">
-  <div class="sec-head"><div><h2 id="h-pri">{t('Where the 2023-2025 readings point first', '2023-2025 की रीडिंग पहले कहाँ इशारा करती हैं')}</h2></div></div>
+  <div class="sec-head"><div><h2 id="h-pri">{t('Which ghats to check first', 'पहले किन घाटों को देखें')}</h2></div></div>
   <div class="bento">
   <div>
   {answer}
   <details class="help">
-    <summary>{t('How this score works, in 30 seconds', 'यह स्कोर कैसे बनता है, 30 सेकंड में')}</summary>
+    <summary>{t('How the score works', 'स्कोर कैसे बनता है')}</summary>
     <p>{t('Each ghat is scored from 0 to 100 on dissolved oxygen, BOD and pH readings against CPCB Class B limits. A reading counts more the further it is past the limit. Missing readings are left out and shown as a range, never counted as clean.',
           'हर घाट को घुलित ऑक्सीजन, BOD और pH की रीडिंग के आधार पर CPCB क्लास B सीमा के मुकाबले 0 से 100 अंक मिलते हैं। रीडिंग सीमा से जितनी दूर, उतना अधिक असर। छूटी रीडिंग स्कोर में नहीं गिनी जातीं और दायरे में दिखती हैं, साफ़ नहीं मानी जातीं।')}
       <a href="#method">{t('Full method', 'पूरी विधि')}</a></p>
   </details>
   </div>
     <aside class="status-panel" aria-labelledby="h-status">
-        <h2 id="h-status">{t('System status', 'सिस्टम स्थिति')}</h2>
+        <h2 id="h-status">{t('About the data', 'आँकड़ों के बारे में')}</h2>
         <dl>
           <div class="row"><dt>{t('Data', 'डेटा')}</dt><dd>{t(f'MPPCB reports {years[0]}-{years[-1]}', f'MPPCB रिपोर्ट {years[0]}-{years[-1]}')}</dd></div>
-          <div class="row"><dt>{t('Live sensors', 'लाइव सेंसर')}</dt><dd>{t('None connected', 'कोई नहीं जुड़ा')}</dd></div>
+          <div class="row"><dt>{t('Latest reading', 'नवीनतम रीडिंग')}</dt><dd>{t(f'Durga {years[-1]}', f'दुर्गा {years[-1]}')}</dd></div>
           <div class="row"><dt>{t('Readings scored', 'स्कोर की रीडिंग')}</dt><dd class="num">{n_key - h['missing_total']} {t('of', 'में से')} {n_key}</dd></div>
           <div class="row"><dt>{t('Yardstick', 'पैमाना')}</dt><dd>{t('CPCB Class B', 'CPCB क्लास B')}</dd></div>
-          <div class="row"><dt>{t('Ghats', 'घाट')}</dt><dd class="num">{n_ghats}</dd></div>
+          <div class="row"><dt>{t('Live data', 'लाइव डेटा')}</dt><dd>{t('None', 'नहीं')}</dd></div>
         </dl>
       </aside>
   </div>
@@ -644,7 +658,7 @@ def render(readings, limits, results, h, sens, brief_en, brief_hi):
     <div class="field"><span class="fl">{t('Severity', 'गंभीरता')}</span><div class="seg" data-inc="sev" role="group" aria-label="Severity">{seg_buttons([('all', all_en), ('critical', t('Critical', 'गंभीर')), ('high', t('High', 'उच्च')), ('moderate', t('Moderate', 'मध्यम'))])}</div></div>
     <div class="field"><span class="fl">{t('Test', 'जाँच')}</span><div class="seg" data-inc="k" role="group" aria-label="Test">{seg_buttons([('all', all_en), ('DO', 'DO'), ('BOD', 'BOD'), ('pH', 'pH')])}</div></div>
     <div class="field"><span class="fl">{t('Festival', 'पर्व')}</span><div class="seg" data-inc="f" role="group" aria-label="Festival">{seg_buttons([('all', all_hi), ('Ganesh', t('Ganesh', 'गणेश')), ('Durga', t('Durga', 'दुर्गा'))])}</div></div>
-    <div class="field"><label for="inc-sort">{t('Sort by', 'क्रम')}</label><select id="inc-sort"><option value="sev">Severity · गंभीरता</option><option value="new">Newest · नया पहले</option><option value="ghat">Ghat A-Z · घाट</option></select></div>
+    <div class="field"><label for="inc-sort">{t('Sort by', 'क्रम')}</label><select id="inc-sort"><option value="sev" data-en="Severity" data-hi="गंभीरता">Severity</option><option value="new" data-en="Newest first" data-hi="नया पहले">Newest first</option><option value="ghat" data-en="Ghat A-Z" data-hi="घाट (क-ज्ञ)">Ghat A-Z</option></select></div>
   </div>
   <p class="inc-count" id="inc-count" role="status" aria-live="polite"></p>
   <div id="inc-tablebox" class="tscroll"><table class="inc-table"><thead><tr>
@@ -667,7 +681,7 @@ def render(readings, limits, results, h, sens, brief_en, brief_hi):
   <div class="sec-head"><div><h2 id="h-br">{t('Brief to forward', 'आगे भेजने के लिए सार')}</h2></div></div>
   <div class="panel brief">
     <div class="brief-bar">
-      <span class="muted small">{t('Generated by code from the numbers above. No language model.', 'ऊपर के आँकड़ों से कोड द्वारा बना। कोई भाषा मॉडल नहीं।')}</span>
+      <span class="muted small">{t('Every figure comes from the numbers above.', 'हर आँकड़ा ऊपर के आँकड़ों से लिया गया है।')}</span>
       <span class="brief-btns"><button type="button" class="btn ghost" id="dl-pdf">{t('Download PDF', 'PDF डाउनलोड करें')}</button>
       <button type="button" class="btn" id="copy">{t('Copy brief', 'सार कॉपी करें')}</button></span>
     </div>
@@ -684,7 +698,7 @@ def render(readings, limits, results, h, sens, brief_en, brief_hi):
           f'वज़न हमारा निर्णय है। {sens["n_weightings"]} तरह के वज़न से दोबारा क्रम: {esc(NAME_HI[sens["top_site"]])} {sens["n_weightings"]} में से {sens["top_count"]} बार पहले, {esc(NAME_HI[sens["bottom_site"]])} {sens["n_weightings"]} में से {sens["bottom_count"]} बार आख़िरी, और रैंक {mid} का क्रम बदलता है। बीच की तुलना में सिरों पर अधिक भरोसा करें।')}</p>
   </div></div>
   <div class="tscroll"><table><thead><tr><th>{t('Ghat', 'घाट')}</th>{sens_head}</tr></thead><tbody>{sens_rows}</tbody></table></div>
-  <p class="muted small">{t('Shaded: rank differs from the shipped weighting.', 'रंगीन: चुने गए वज़न से अलग रैंक।')}</p>
+  <p class="muted small">{t('Shaded: rank differs from the default weighting.', 'रंगीन: सामान्य वज़न से अलग रैंक।')}</p>
 </section>
 
 <section id="method" aria-labelledby="h-me">

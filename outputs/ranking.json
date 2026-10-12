@@ -41,7 +41,7 @@
     "weightings": [
       {
         "key": "shipped",
-        "label": "Shipped: half breach rate, half severity, DO / BOD / pH equal"
+        "label": "Default: half breach rate, half severity, DO / BOD / pH equal"
       },
       {
         "key": "breach_only",

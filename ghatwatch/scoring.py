@@ -52,7 +52,7 @@ class Weighting:
 
 
 WEIGHTINGS = [
-    Weighting("shipped", "Shipped: half breach rate, half severity, DO / BOD / pH equal"),
+    Weighting("shipped", "Default: half breach rate, half severity, DO / BOD / pH equal"),
     Weighting("breach_only", "Breach rate only", 1.0, 0.0),
     Weighting("severity_only", "Severity only", 0.0, 1.0),
     Weighting("do_only", "DO only", param_weights={DO: 1.0, BOD: 0.0, PH: 0.0}),

@@ -1,0 +1,41 @@
+name: Tests and build check
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Unit tests
+        run: python -m unittest discover -s tests -v
+
+      - name: Browser scripts parse
+        run: |
+          node --check ghatwatch/assets/report.js
+          node --check ghatwatch/assets/pdf_analysis.js
+
+      - name: Rebuild outputs and the published page
+        run: python run.py
+
+      - name: Committed outputs match the build
+        run: |
+          if ! git diff --exit-code --stat -- outputs docs; then
+            echo "::error::outputs/ or docs/ is out of date. Run 'python run.py' and commit the result."
+            exit 1
+          fi

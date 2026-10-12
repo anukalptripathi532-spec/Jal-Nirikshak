@@ -10,7 +10,7 @@ from .scoring import WEIGHTINGS, is_breach
 
 def _csv(path, header, rows):
     with open(path, "w", encoding="utf-8", newline="") as f:
-        w = csv.writer(f)
+        w = csv.writer(f, lineterminator="\n")
         w.writerow(header)
         w.writerows(rows)
 
@@ -103,9 +103,9 @@ def write_all(out_dir, readings, limits, results, sens, headline, brief_en, brie
         },
         "ranking": rk,
     }
-    with open(os.path.join(out_dir, "ranking.json"), "w", encoding="utf-8") as f:
+    with open(os.path.join(out_dir, "ranking.json"), "w", encoding="utf-8", newline="\n") as f:
         json.dump(data, f, ensure_ascii=False, indent=2)
     for name, text in (("brief_en.md", brief_en), ("brief_hi.md", brief_hi)):
-        with open(os.path.join(out_dir, name), "w", encoding="utf-8") as f:
+        with open(os.path.join(out_dir, name), "w", encoding="utf-8", newline="\n") as f:
             f.write(text)
     return ev

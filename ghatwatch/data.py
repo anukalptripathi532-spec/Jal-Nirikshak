@@ -8,6 +8,7 @@ Every reading gets a status:
 """
 
 import csv
+import math
 import os
 from dataclasses import dataclass, field
 
@@ -88,9 +89,10 @@ def classify(value, value_as_printed, flag):
     fl = (flag or "").strip().upper()
     if v:
         try:
-            return float(v), MEASURED
+            x = float(v)
         except ValueError:
             return None, MISSING
+        return (x, MEASURED) if math.isfinite(x) and x >= 0 else (None, MISSING)
     if fl == "BDL" or printed == "BDL":
         return None, BDL_STATUS
     if fl == "ND" or printed == "ND":
@@ -108,8 +110,13 @@ def normalise_water_body(wb):
 
 def load_readings(path=READINGS_CSV):
     out = []
-    with open(path, encoding="utf-8", newline="") as f:
-        for row in csv.DictReader(f):
+    with open(path, encoding="utf-8-sig", newline="") as f:
+        reader = csv.DictReader(f)
+        need = {"year", "festival", "site", "water_body", "phase", "parameter", "value", "value_as_printed", "flag", "unit_assumed"}
+        lacking = need - set(reader.fieldnames or [])
+        if lacking:
+            raise ValueError(f"{path}: missing column(s) {', '.join(sorted(lacking))}")
+        for row in reader:
             value, status = classify(row["value"], row["value_as_printed"], row["flag"])
             page = row.get("source_page", "").strip()
             out.append(Reading(
@@ -134,7 +141,7 @@ def load_readings(path=READINGS_CSV):
 def load_limits(path=CRITERIA_CSV, cpcb_class="B"):
     """Read the Class B limits for DO, BOD and pH from the CPCB CSV."""
     limits = {}
-    with open(path, encoding="utf-8", newline="") as f:
+    with open(path, encoding="utf-8-sig", newline="") as f:
         for row in csv.DictReader(f):
             if row["class"].strip() != cpcb_class:
                 continue

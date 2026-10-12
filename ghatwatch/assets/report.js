@@ -63,6 +63,8 @@
     listeners.forEach(function (f) { f(); });
   }
   $$('[data-set-lang]').forEach(function (b) { b.addEventListener('click', function () { setLang(b.getAttribute('data-set-lang')); }); });
+  // Apply a saved Hindi choice now, before anything renders (listeners added later render in the right language).
+  try { if (localStorage.getItem('ghatwatch-lang') === 'hi') setLang('hi'); } catch (e) {}
 
   /* ---------- segmented controls ---------- */
   function seg(root, onChange) {
@@ -314,11 +316,11 @@
     sorter.addEventListener('change', fresh);
     $('#inc-more-btn').addEventListener('click', function () { limit += PAGE; render(true); });
     $('#inc-reset').addEventListener('click', function () {
-      f = { sev: 'all', k: 'all', f: 'all', q: '' }; qi.value = '';
+      f = { sev: 'all', k: 'all', f: 'all', q: '' }; qi.value = ''; sorter.value = 'sev';
       $$('[data-inc]').forEach(function (n) { $$('button', n).forEach(function (b) { b.setAttribute('aria-pressed', String(b.getAttribute('data-v') === 'all')); }); });
       fresh();
     });
-    listeners.push(function () { render(false); });
+    listeners.push(function () { $$('option', sorter).forEach(function (o) { o.textContent = o.getAttribute('data-' + lang); }); render(false); });
     render(false);
   }
 
@@ -423,7 +425,7 @@
         b.setAttribute('aria-pressed', String(!on)); renderCompare();
       });
     });
-    listeners.push(renderCompare); renderCompare();
+    listeners.push(function () { $('#cmp-msg').textContent = ''; renderCompare(); }); renderCompare();
   }
 
   /* ---------- suggested-checks checklist (ticks kept in this browser) ---------- */
@@ -495,6 +497,7 @@
   }
   copyBtn.addEventListener('click', function () {
     var text = briefs[lang];
+    if (!text) { done(false); return; }
     window.__lastCopied = text;
     if (navigator.clipboard && window.isSecureContext) navigator.clipboard.writeText(text).then(function () { done(true); }, function () { fallback(text); });
     else fallback(text);
@@ -648,7 +651,11 @@
       en: { analyse: 'Analyse', reading: 'Reading page', of: 'of', cancel: 'Stop', stopped: 'Stopped early: only the pages read so far are analysed.',
         loadLib: 'Starting the PDF reader…', pass: 'This PDF is password protected, so it cannot be read.', badpdf: 'This file could not be read as a PDF.', generic: 'The PDF could not be analysed.',
         noText: 'This PDF has no readable text (it looks like a scan). Scanned images need OCR, which is not available here.',
-        noTables: 'No immersion water-quality tables were found.', noTablesHelp: 'This reader looks for MPPCB-style tables with Pre Immersion, During Immersion and After one week columns, then reads pH, dissolved oxygen and BOD.',
+        noTables: 'No water-quality tables were found.', noTablesHelp: 'This reader understands two MPPCB table layouts: immersion tables with Pre Immersion, During Immersion and After one week columns, and monthly lake-monitoring tables with April to March columns. From either it reads pH, dissolved oxygen and BOD. Reports with only species lists, maps or prose have nothing for it to read.',
+        mTitle: 'Monthly lake-monitoring tables', mIntro: 'This PDF holds monthly water-quality tables (April to March), not immersion tables. Readings are checked against the same Class B limits as the dashboard. They describe the lake at its sampling stations, not the immersion ghats, so they are not compared with the dashboard or added to the ranking.',
+        stations: 'sampling stations', readings: 'readings', station: 'Station', fy: 'Year',
+        mHowText: 'Each value is placed under its month by its position on the page. A row is “Clear” when every value sits in a month column, is physically possible, and the highest and lowest values match the Maxi. and Mini. the report prints for that row. “Check page” means one of these failed (for example the report prints a minimum that is not in its own row, or a value such as pH 834), so open the PDF page. Words such as “Instrument disorder” or “NR” are shown as not sampled. Months run April to March, so January to March belong to the second year of “2023-24”.',
+        mScope: 'Highlights use rows marked Clear only.', testAll: 'All tests', mMore: 'Show 40 more',
         pages: 'pages read', tables: 'tables found', rowsRead: 'readings rows', needCheck: 'rows to check', clear: 'Clear', partial: 'Partial', check: 'Check page',
         howRead: 'How reliable are these numbers?', howReadText: 'Each row is read from the position of its numbers under the Pre, During and After columns. “Clear” means all values were found in their columns and are physically plausible. “Partial” means a value is missing from the row. “Check page” means something looked wrong, such as an impossible value or stray text, so open the PDF page. A table whose ghat name is not in the PDF text is listed as “name not readable” and is never assigned to a ghat.',
         compare: 'Against the dashboard data', cmpMatch: 'readings match the dashboard', cmpDiff: 'differ from the dashboard', cmpNew: 'are not in the dashboard',
@@ -661,7 +668,11 @@
       hi: { analyse: 'विश्लेषण करें', reading: 'पृष्ठ पढ़ा जा रहा है', of: 'में से', cancel: 'रोकें', stopped: 'बीच में रोका गया: अब तक पढ़े गए पृष्ठों का ही विश्लेषण हुआ।',
         loadLib: 'PDF रीडर शुरू हो रहा है…', pass: 'यह PDF पासवर्ड से सुरक्षित है, इसलिए पढ़ा नहीं जा सकता।', badpdf: 'यह फ़ाइल PDF के रूप में पढ़ी नहीं जा सकी।', generic: 'PDF का विश्लेषण नहीं हो सका।',
         noText: 'इस PDF में पढ़ने लायक पाठ नहीं है (यह स्कैन जैसा लगता है)। स्कैन की गई छवियों के लिए OCR चाहिए, जो यहाँ उपलब्ध नहीं है।',
-        noTables: 'विसर्जन के पानी की गुणवत्ता की कोई तालिका नहीं मिली।', noTablesHelp: 'यह रीडर विसर्जन से पहले, विसर्जन के दौरान और एक सप्ताह बाद के कॉलम वाली MPPCB शैली की तालिकाएँ खोजता है, फिर pH, घुलित ऑक्सीजन और BOD पढ़ता है।',
+        noTables: 'पानी की गुणवत्ता की कोई तालिका नहीं मिली।', noTablesHelp: 'यह रीडर MPPCB की दो तरह की तालिकाएँ समझता है: विसर्जन से पहले, दौरान और एक सप्ताह बाद के कॉलम वाली विसर्जन तालिकाएँ, और अप्रैल से मार्च के कॉलम वाली मासिक झील-निगरानी तालिकाएँ। दोनों से यह pH, घुलित ऑक्सीजन और BOD पढ़ता है। जिन रिपोर्टों में केवल प्रजातियों की सूची, नक्शे या लेख हैं, उनमें पढ़ने लायक कुछ नहीं है।',
+        mTitle: 'मासिक झील-निगरानी तालिकाएँ', mIntro: 'इस PDF में विसर्जन तालिकाएँ नहीं, बल्कि मासिक (अप्रैल से मार्च) पानी की गुणवत्ता की तालिकाएँ हैं। रीडिंग डैशबोर्ड वाली क्लास B सीमा से ही जाँची जाती हैं। ये झील के नमूना-स्थलों की हैं, विसर्जन घाटों की नहीं, इसलिए इन्हें डैशबोर्ड से नहीं मिलाया जाता और रैंकिंग में नहीं जोड़ा जाता।',
+        stations: 'नमूना-स्थल', readings: 'रीडिंग', station: 'नमूना-स्थल', fy: 'वर्ष',
+        mHowText: 'हर मान पृष्ठ पर उसकी स्थिति से उसके महीने के नीचे रखा जाता है। पंक्ति “स्पष्ट” तब है जब हर मान किसी महीने के कॉलम में हो, संभव सीमा में हो, और सबसे बड़ा व सबसे छोटा मान रिपोर्ट में छपे Maxi. और Mini. से मेल खाए। “पृष्ठ जाँचें” का मतलब है इनमें से कोई जाँच विफल हुई (जैसे रिपोर्ट ऐसा न्यूनतम छापे जो उसकी पंक्ति में नहीं है, या pH 834 जैसा मान), इसलिए PDF का पृष्ठ खोलें। “Instrument disorder” या “NR” जैसे शब्द “नमूना नहीं” दिखाए जाते हैं। महीने अप्रैल से मार्च तक हैं, इसलिए जनवरी से मार्च “2023-24” के दूसरे वर्ष के हैं।',
+        mScope: 'मुख्य बातें केवल “स्पष्ट” पंक्तियों से बनी हैं।', testAll: 'सभी जाँचें', mMore: '40 और दिखाएँ',
         pages: 'पृष्ठ पढ़े गए', tables: 'तालिकाएँ मिलीं', rowsRead: 'रीडिंग पंक्तियाँ', needCheck: 'जाँचने योग्य पंक्तियाँ', clear: 'स्पष्ट', partial: 'अधूरी', check: 'पृष्ठ जाँचें',
         howRead: 'ये आँकड़े कितने भरोसेमंद हैं?', howReadText: 'हर पंक्ति पहले, दौरान और बाद के कॉलम के नीचे अंकों की स्थिति देखकर पढ़ी जाती है। “स्पष्ट” का मतलब है कि सभी मान अपने कॉलम में मिले और संभव सीमा में हैं। “अधूरी” का मतलब है कि पंक्ति में कोई मान नहीं मिला। “पृष्ठ जाँचें” का मतलब है कि कुछ गड़बड़ दिखी, जैसे असंभव मान या बेमेल पाठ, इसलिए PDF का पृष्ठ खोलें। जिस तालिका का घाट-नाम PDF के पाठ में नहीं है, उसे “नाम पढ़ा नहीं जा सका” दिखाया जाता है और किसी घाट से नहीं जोड़ा जाता।',
         compare: 'डैशबोर्ड के आँकड़ों से मिलान', cmpMatch: 'रीडिंग डैशबोर्ड से मेल खाती हैं', cmpDiff: 'डैशबोर्ड से अलग हैं', cmpNew: 'डैशबोर्ड में नहीं हैं',
@@ -706,7 +717,7 @@
       var stop = E('button', 'btn ghost', PT().cancel); stop.type = 'button'; var stopped = false; stop.addEventListener('click', function () { stopped = true; }); box.appendChild(stop);
       var fail = function (key) { box.textContent = ''; box.appendChild(E('h3', '', rec.name)); var e = E('div', 'state err'); e.setAttribute('role', 'alert'); e.appendChild(E('b', '', PT()[key] || PT().generic)); box.appendChild(e); };
       loadPdfJs().then(function (lib) {
-        return rec.blob.arrayBuffer().then(function (buf) { return lib.getDocument({ data: new Uint8Array(buf), verbosity: 0 }).promise; });
+        return rec.blob.arrayBuffer().then(function (buf) { return lib.getDocument({ data: new Uint8Array(buf), verbosity: 0, isEvalSupported: false }).promise; });
       }).then(function (doc) {
         var parser = GWPdf.createParser({ aliases: DATA.aliases, year: nameYear(rec.name) });
         var n = 1;
@@ -734,12 +745,19 @@
       });
     }
 
+    // One language listener for whichever analysis is on screen (adding one per render made each toggle re-render 2^n times).
+    var shownAnalysis = null;
+    listeners.push(function () { var a = shownAnalysis; if (a && sel === a.rec.id && !a.box.hidden) renderAnalysis(a.box, a.rec, a.res); });
+
     function renderAnalysis(box, rec, res) {
+      shownAnalysis = { box: box, rec: rec, res: res };
       box.textContent = '';
       box.appendChild(E('h3', '', rec.name));
+      var monthly = res.monthly || [];
       if (res.pagesWithText === 0) { var e1 = E('div', 'state err'); e1.setAttribute('role', 'alert'); e1.appendChild(E('b', '', PT().noText)); box.appendChild(e1); return; }
-      if (!res.rows.length && res.stopped) { box.appendChild(E('p', 'note', PT().stopped)); return; }
-      if (!res.rows.length) { var e2 = E('div', 'state panel'); e2.appendChild(E('b', '', PT().noTables)); e2.appendChild(E('span', '', PT().noTablesHelp)); box.appendChild(e2); return; }
+      if (!res.rows.length && !monthly.length && res.stopped) { box.appendChild(E('p', 'note', PT().stopped)); return; }
+      if (!res.rows.length && !monthly.length) { var e2 = E('div', 'state panel'); e2.appendChild(E('b', '', PT().noTables)); e2.appendChild(E('span', '', PT().noTablesHelp)); box.appendChild(e2); return; }
+      if (!res.rows.length) { renderMonthly(box, rec, res); return; }
       var rows = res.rows.map(function (r) {
         var L = DATA.limits[r.param], cells = FPHASE.map(function (p) {
           var c = r.cells[p], out = null;
@@ -863,7 +881,117 @@
         var a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([out.join('\r\n') + '\r\n'], { type: 'text/csv' })); a.download = rec.name.replace(/\.pdf$/i, '') + '_extracted.csv'; a.click();
       });
       draw();
-      listeners.push(function () { if (sel === rec.id && !box.hidden) renderAnalysis(box, rec, res); });
+      if (monthly.length) renderMonthly(box, rec, res);
+    }
+
+    /* Monthly lake-monitoring tables: one row per station, year and test, one column per month April..March. */
+    var MON = { en: ['Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec', 'Jan', 'Feb', 'Mar'],
+                hi: ['अप्रैल', 'मई', 'जून', 'जुलाई', 'अगस्त', 'सितंबर', 'अक्टूबर', 'नवंबर', 'दिसंबर', 'जनवरी', 'फ़रवरी', 'मार्च'] };
+    function renderMonthly(box, rec, res) {
+      var P = PT(), rows = res.monthly.map(function (r) {
+        var L = DATA.limits[r.param];
+        var cells = r.cells.map(function (c) { return { raw: c.raw, v: c.v, state: c.state, month: c.month, year: c.year, out: c.state === 'num' && r.conf !== 'check' ? outsideLimit(L, c.v) : null }; });
+        return { r: r, cells: cells, unit: L.unit };
+      });
+      var sec = E('div', 'monthly'); box.appendChild(sec);
+      sec.appendChild(E('h3', '', P.mTitle));
+      sec.appendChild(E('p', 'muted small', P.mIntro));
+      var stations = {}, nRead = 0, nCheck = 0;
+      rows.forEach(function (x) { stations[x.r.station.toLowerCase()] = 1; if (x.r.conf === 'check') nCheck++; x.cells.forEach(function (c) { if (c.state === 'num') nRead++; }); });
+      var sum = E('ul', 'sev-summary');
+      [[res.total, P.pages], [Object.keys(stations).length, P.stations], [nRead, P.readings], [nCheck, P.needCheck]].forEach(function (p) {
+        var li = E('li'); li.appendChild(E('b', '', String(p[0]))); li.appendChild(E('span', 'muted', p[1])); sum.appendChild(li);
+      });
+      sec.appendChild(sum);
+      if (res.stopped) sec.appendChild(E('p', 'note', P.stopped));
+      var det = E('details'); det.appendChild(E('summary', '', P.howRead)); det.appendChild(E('p', 'muted small', P.mHowText)); sec.appendChild(det);
+
+      // highlights, from clear rows only
+      var clear = rows.filter(function (x) { return x.r.conf === 'clear'; });
+      var nums = function (param) { var a = []; clear.forEach(function (x) { if (x.r.param === param) x.cells.forEach(function (c) { if (c.state === 'num') a.push({ v: c.v, x: x, c: c }); }); }); return a; };
+      var whereOf = function (o) { return o.x.r.station + ', ' + MON[lang][o.c.month] + ' ' + (o.c.year || '?') + ', p.' + o.x.r.page; };
+      var hl = E('div', 'hl-box'); hl.appendChild(E('h4', '', P.highlights));
+      var ul = E('ul', 'hl-list');
+      ul.appendChild(E('li', '', P.outsideBy + ': ' + ['DO', 'BOD', 'pH'].map(function (k) { var a = nums(k); return k + ' ' + a.filter(function (o) { return outsideLimit(DATA.limits[k], o.v); }).length + '/' + a.length; }).join(' · ')));
+      var doN = nums('DO'), bodN = nums('BOD');
+      if (doN.length) { var lo = doN.reduce(function (a, b) { return b.v < a.v ? b : a; }); ul.appendChild(E('li', '', P.lowestDO + ': ' + fmtN(lo.v) + ' mg/l – ' + whereOf(lo))); }
+      if (bodN.length) { var hi = bodN.reduce(function (a, b) { return b.v > a.v ? b : a; }); ul.appendChild(E('li', '', P.highestBOD + ': ' + fmtN(hi.v) + ' mg/l – ' + whereOf(hi))); }
+      hl.appendChild(ul); hl.appendChild(E('p', 'muted small', P.mScope)); sec.appendChild(hl);
+
+      // filters + table
+      var f = { k: 'all', out: false, chk: false, q: '' }, limit = 40;
+      var ctl = E('div', 'controls');
+      var fld = function (label, node) { var d = E('div', 'field'); d.appendChild(E('span', 'fl', label)); d.appendChild(node); return d; };
+      var sg = E('div', 'seg'); sg.setAttribute('role', 'group'); sg.setAttribute('aria-label', P.test);
+      [['all', P.testAll], ['DO', 'DO'], ['BOD', 'BOD'], ['pH', 'pH']].forEach(function (o) {
+        var b = E('button', '', o[1]); b.type = 'button'; b.setAttribute('aria-pressed', String(o[0] === 'all'));
+        b.addEventListener('click', function () { f.k = o[0]; $$('button', sg).forEach(function (x) { x.setAttribute('aria-pressed', String(x === b)); }); limit = 40; draw(); }); sg.appendChild(b);
+      });
+      ctl.appendChild(fld(P.test, sg));
+      var q = E('input'); q.type = 'search'; q.setAttribute('aria-label', P.search); q.placeholder = P.search; q.addEventListener('input', function () { f.q = q.value.toLowerCase(); limit = 40; draw(); });
+      ctl.appendChild(fld(P.search, q));
+      var tog = function (key, text) {
+        var b = E('button', 'btn ghost', text); b.type = 'button'; b.setAttribute('aria-pressed', 'false');
+        b.addEventListener('click', function () { f[key] = !f[key]; b.setAttribute('aria-pressed', String(f[key])); b.classList.toggle('on', f[key]); limit = 40; draw(); }); return b;
+      };
+      var tw = E('div', 'field'); tw.appendChild(E('span', 'fl', ' ')); var tr = E('div', 'toggles'); tr.appendChild(tog('out', P.onlyOut)); tr.appendChild(tog('chk', P.onlyCheck)); tw.appendChild(tr); ctl.appendChild(tw);
+      sec.appendChild(ctl);
+      var count = E('p', 'inc-count'); count.setAttribute('role', 'status'); count.setAttribute('aria-live', 'polite'); sec.appendChild(count);
+      var holder = E('div'); sec.appendChild(holder);
+      var moreWrap = E('div', 'inc-more'); var moreBtn = E('button', 'btn ghost', P.mMore); moreBtn.type = 'button'; moreBtn.addEventListener('click', function () { limit += 40; draw(); }); moreWrap.appendChild(moreBtn); sec.appendChild(moreWrap);
+      var actions = E('div', 'pdf-actions'); var dl = E('button', 'btn', P.download); dl.type = 'button'; actions.appendChild(dl); sec.appendChild(actions);
+      sec.appendChild(E('p', 'muted small', P.verify));
+
+      function cell(c) {
+        var td = E('td', 'num');
+        if (c.state === 'blank') { td.appendChild(E('span', 'muted', '–')); return td; }
+        if (c.state !== 'num') { var m = E('span', 'muted', c.raw); if (c.state === 'missing') m.title = P.notSampled; td.appendChild(m); return td; }
+        td.appendChild(E('span', c.out ? 'val out' : 'val', fmtN(c.v)));
+        if (c.out) td.appendChild(E('span', 'sr', ' ' + P.outside));
+        return td;
+      }
+      function draw() {
+        var shown = rows.filter(function (x) {
+          if (f.k !== 'all' && x.r.param !== f.k) return false;
+          if (f.out && !x.cells.some(function (c) { return c.out; })) return false;
+          if (f.chk && x.r.conf === 'clear') return false;
+          if (f.q && (x.r.station + ' ' + x.r.water + ' ' + x.r.fyLabel).toLowerCase().indexOf(f.q) < 0) return false;
+          return true;
+        });
+        holder.textContent = '';
+        var vis = shown.slice(0, limit);
+        count.textContent = P.showing + ' ' + vis.length + ' ' + P.of + ' ' + shown.length + ' ' + P.rows;
+        moreWrap.hidden = vis.length >= shown.length;
+        if (!shown.length) { var st = E('div', 'state panel'); st.appendChild(E('b', '', P.empty)); holder.appendChild(st); return; }
+        var wrap = E('div', 'tscroll'), t = document.createElement('table');
+        var th = E('tr'); [P.station, P.fy, P.page, P.test].concat(MON[lang]).concat([P.quality]).forEach(function (h) { th.appendChild(E('th', '', h)); });
+        var thead = E('thead'); thead.appendChild(th); t.appendChild(thead);
+        var tb = E('tbody');
+        vis.forEach(function (x) {
+          var tr = E('tr'); var td = E('td'); td.appendChild(E('strong', '', x.r.station || P.unreadable));
+          if (x.r.water && x.r.water !== x.r.station) td.appendChild(E('div', 'muted small', x.r.water)); tr.appendChild(td);
+          tr.appendChild(E('td', '', x.r.fyLabel || P.unknownWhen));
+          tr.appendChild(E('td', 'num', 'p.' + x.r.page));
+          tr.appendChild(E('td', '', x.r.param + (x.unit ? ' (' + x.unit + ')' : '')));
+          x.cells.forEach(function (c) { tr.appendChild(cell(c)); });
+          var qd = E('td'); qd.appendChild(E('span', 'tag ' + (x.r.conf === 'clear' ? 'tag-ok' : 'tag-bad'), P[x.r.conf])); tr.appendChild(qd);
+          tb.appendChild(tr);
+        });
+        t.appendChild(tb); wrap.appendChild(t); holder.appendChild(wrap);
+      }
+      dl.addEventListener('click', function () {
+        var esc = function (s) { s = String(s === null || s === undefined ? '' : s); return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; };
+        var out = ['source_file,page,report_year,station,water_body,parameter,month,year,value_as_printed,outside_class_b_limit,row_quality'];
+        rows.forEach(function (x) {
+          x.cells.forEach(function (c) {
+            if (c.state === 'blank') return;
+            out.push([rec.name, x.r.page, x.r.fyLabel, x.r.station, x.r.water, x.r.param, MON.en[c.month], c.year || '', c.raw, c.out === null ? '' : (c.out ? 'yes' : 'no'), x.r.conf].map(esc).join(','));
+          });
+        });
+        var a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([out.join('\r\n') + '\r\n'], { type: 'text/csv' })); a.download = rec.name.replace(/\.pdf$/i, '') + '_monthly_extracted.csv'; a.click();
+        setTimeout(function () { URL.revokeObjectURL(a.href); }, 0);
+      });
+      draw();
     }
     var outsideLimit = function (L, v) { return L.kind === 'min' ? v < L.low : L.kind === 'max' ? v > L.high : (v < L.low || v > L.high); };
     function show(rec) { sel = rec.id; renderList(); if (rec.kind === 'pdf') analysePDF(rec); else { $('#pdf-result').hidden = true; checkCSV(rec); } }
@@ -900,5 +1028,4 @@
   }
   applyView(true);
 
-  try { var saved = localStorage.getItem('ghatwatch-lang'); if (saved) setLang(saved); } catch (e) {}
 })();
